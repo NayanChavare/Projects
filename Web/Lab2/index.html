@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        h1{
+            text-align: center;
+        }
+            body {
+                margin: 0;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: linear-gradient(135deg, #e0e7ff 0%, #f0f0f0 100%);
+            }
+        #main{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            height: 400px;
+            width: 100%;
+                flex-wrap: wrap;
+        }
+        #search{
+            display: flex;
+            width: 48%;
+            height: 300px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border-radius: 20px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+        }
+        #result{
+            width: 48%;
+            height: 300px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            flex-direction: column;
+            flex-wrap: wrap;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+        }
+        input{
+            padding: 10px;
+            width: 500px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+                font-size: 1rem;
+        }
+        button{
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+                font-size: 1rem;
+                transition: background 0.2s;
+            }
+            button:focus {
+                outline: 2px solid #0056b3;
+            }
+            button:hover {
+                background-color: #0056b3;
+        }
+        #search-history{
+            display: flex;
+            margin-top: 10px;
+            width: 90%;
+            height: 200px;
+            background-color: #e0e0e0;
+            border-radius: 20px;
+            padding: 10px;
+            overflow-y: auto;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        #sh{
+            text-align: center;
+            width: 100%;
+        }
+        #clearHistoryBtn{
+            position: absolute;
+            top: 10px;
+            right: 18px;
+            margin: 0;
+            background: #d32f2f;
+            color: #fff;
+            border-radius: 20px;
+            border: none;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+            z-index: 2;
+        }
+        #clearHistoryBtn:hover{
+            background: #a31515;
+        }
+        #search-history .history-item{
+            background-color: #007BFF;
+            color: white;
+            border-radius: 16px;
+            text-align: center;
+            padding: 4px 16px;
+            margin: 5px 6px;
+            cursor: pointer;
+            height: 32px;
+            min-width: 80px;
+            max-width: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+        #search-history .history-item:hover{
+            background-color: #0056b3;
+        }
+        .weather-card{
+            background-color: #e0e0e0;
+            padding: 20px;
+            border-radius: 20px;
+            width: 100%;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            }
+            #loading {
+                font-size: 1.2rem;
+                color: #007BFF;
+                margin-top: 20px;
+            }
+            @media (max-width: 900px) {
+                #main {
+                    flex-direction: column;
+                    height: auto;
+                }
+                #search, #result {
+                    width: 90%;
+                    margin-bottom: 20px;
+                    height: auto;
+                }
+                input {
+                    width: 90%;
+                }
+            }
+        #clearHistoryBtn {
+            margin: 10px auto 0 auto;
+            display: block;
+            background: #d32f2f;
+            color: #fff;
+            border-radius: 20px;
+            border: none;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        #clearHistoryBtn:hover {
+            background: #a31515;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Async Weather Tracker</h1>
+    <div id="main">
+        <div id="search">
+            <div id="search-input">
+                    <form action="" id="weatherForm" autocomplete="off">
+                        <label for="city" style="display:none">City Name</label>
+                        <input type="text" id="city" placeholder="Enter city name" aria-label="Enter city name">
+                        <button type="submit" id="searchBtn">Search</button>
+                    </form>
+            </div>
+            <div id="search-history">
+                <h4 id="sh">Search History</h4>
+                <button id="clearHistoryBtn">Clear History</button>
+
+            </div>
+        </div>
+        <div id="result">
+            <h3>Weather Information</h3>
+            <div id="weather-data">
+
+            </div>
+                <div id="loading" style="display:none;">Loading...</div>
+        </div>
+    </div>
+    <script>
+            const API_KEY = "45a597621c6c4b425fc2c56115452b91";
+            const form = document.getElementById("weatherForm");
+            const cityInput = document.getElementById("city");
+            const wdata = document.getElementById("weather-data");
+            const historyDiv = document.getElementById("search-history");
+            const loadingDiv = document.getElementById("loading");
+            let searchHistory = [];
+
+            
+            function loadHistory() {
+                const stored = localStorage.getItem('weatherSearchHistory');
+                if (stored) {
+                    try {
+                        searchHistory = JSON.parse(stored);
+                    } catch {
+                        searchHistory = [];
+                    }
+                }
+            }
+
+            
+            function saveHistory() {
+                localStorage.setItem('weatherSearchHistory', JSON.stringify(searchHistory));
+            }
+
+            async function getWeather(e, cityName) {
+                if (e) e.preventDefault();
+                let city = cityName || cityInput.value.trim();
+                if (!city) {
+                    showError("Please enter a city name.");
+                    return;
+                }
+                showLoading(true);
+                try {
+                    let response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`);
+                    let data = await response.json();
+                    if (response.status !== 200) {
+                        showError(data.message ? `Error: ${data.message}` : "City not found.");
+                        showLoading(false);
+                        return;
+                    }
+                    let card = document.createElement("div");
+                    card.innerHTML = `
+                        <div class="weather-card">
+                            <div class="city-name-box">${data.name}, ${data.sys.country}</div>
+                            <div>Temperature: ${data.main.temp} °C</div>
+                            <div>Weather: ${data.weather[0].description}</div>
+                            <div>Humidity: ${data.main.humidity}%</div>
+                            <div>Wind Speed: ${data.wind.speed} m/s</div>
+                            <div>Pressure: ${data.main.pressure} hPa</div>
+                            <div>Sunrise: ${new Date(data.sys.sunrise * 1000).toLocaleTimeString()}</div>
+                            <div>Sunset: ${new Date(data.sys.sunset * 1000).toLocaleTimeString()}</div>
+                        </div>
+                    `;
+                    let button = document.createElement("button");
+                    button.innerHTML = "Clear";
+                    button.addEventListener("click", () => {
+                        card.remove();
+                    });
+                    card.appendChild(button);
+                    wdata.innerHTML = "";
+                    wdata.appendChild(card);
+                    addToHistory(data.name);
+                    cityInput.value = "";
+                } catch (err) {
+                    showError("Network error. Please try again.");
+                }
+                showLoading(false);
+            }
+
+            function showError(msg) {
+                wdata.innerHTML = `<div style='color:#d32f2f; font-weight:bold; padding:10px;'>${msg}</div>`;
+            }
+
+            function showLoading(show) {
+                loadingDiv.style.display = show ? "block" : "none";
+            }
+
+            function addToHistory(city) {
+                city = city.trim();
+                if (!city || searchHistory.includes(city)) return;
+                searchHistory.push(city);
+                saveHistory();
+                renderHistory();
+            }
+
+            function renderHistory() {
+                Array.from(historyDiv.children).forEach(child => {
+                    if (child.id !== "sh" && child.id !== "clearHistoryBtn") child.remove();
+                });
+                searchHistory.slice().reverse().forEach(city => {
+                    let item = document.createElement("div");
+                    item.className = "history-item";
+                    item.innerHTML = city;
+                    item.setAttribute("tabindex", "0");
+                    item.setAttribute("role", "button");
+                    item.setAttribute("aria-label", `Search weather for ${city}`);
+                    item.addEventListener("click", () => {
+                        getWeather(null, city);
+                    });
+                    item.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            getWeather(null, city);
+                        }
+                    });
+                    historyDiv.appendChild(item);
+                });
+            }
+
+            function clearHistory() {
+                searchHistory = [];
+                saveHistory();
+                renderHistory();
+            }
+
+            form.addEventListener("submit", getWeather);
+            cityInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    document.getElementById("searchBtn").focus();
+                }
+            });
+            document.getElementById("clearHistoryBtn").addEventListener("click", clearHistory);
+            loadHistory();
+            renderHistory();
+    </script>
+</body>
+</html>

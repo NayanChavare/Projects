@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assigment</title>
+</head>
+<body>
+    <script>
+        let assignment="submitted";
+        let promise = new Promise((resolve,reject)=>{
+            if(assignment==="submitted"){
+                resolve("Assignment submitted successfully");
+            }else{
+                reject("Assignment submission failed");
+            }
+        })
+        promise.then(res=>console.log(res)).catch(err=>console.log(err));
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Functions</title>
+</head>
+<body>
+    <script>
+        // function demo(){
+        //     console.log("Hello");
+        //     console.log("World");
+        //     var a = 10;
+        //     var b = 20;
+        //     console.log(a+b);
+        // }
+        // demo();
+
+        // function* trafficLight(){
+            
+        //     yield "Red";
+            
+        //     yield "Yellow";
+            
+        //     yield "Green";
+        // }
+        // var light = trafficLight();
+        // console.log(light.next());
+        // console.log(light.next());
+        // console.log(light.next());
+        // console.log(light.next());
+
+        function* education(){
+            yield "Primary School";
+            yield "Secondary School";
+            yield "High School";
+            yield "Undergraduate";
+            yield "Postgraduate";
+            yield "Doctorate";
+
+        }
+        var edu = education();
+        console.log(edu.next());
+        console.log(edu.next());
+        console.log(edu.next());
+        console.log(edu.next());
+        console.log(edu.next());
+        console.log(edu.next());
+        console.log(edu.next());
+    </script>
+</body>
+</html>

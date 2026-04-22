@@ -1,0 +1,36 @@
+--- Part B: Factorial ---
+Factorial of 0 is: 1
+Factorial of 1 is: 1
+Factorial of 5 is: 120
+Factorial of 10 is: 3628800
+
+--- Part B: Fibonacci ---
+Fibonacci(5) = 5
+  Naive calls: 15
+  Memo calls:  9
+Fibonacci(10) = 55
+  Naive calls: 177
+  Memo calls:  19
+Fibonacci(20) = 6765
+  Naive calls: 21891
+  Memo calls:  39
+Fibonacci(30) = 832040
+  Naive calls: 2692537
+  Memo calls:  59
+
+--- Part C: Tower of Hanoi (N=3) ---
+Move disk 1 from A to C
+Move disk 2 from A to B
+Move disk 1 from C to B
+Move disk 3 from A to C
+Move disk 1 from B to A
+Move disk 2 from B to C
+Move disk 1 from A to C
+
+--- Part D: Binary Search ---
+Array: [1, 3, 5, 7, 9, 11, 13]
+Search 7: Index 3
+Search 1: Index 0
+Search 13: Index 6
+Search 2: Index -1
+Empty array search for 5: Index -1

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promise Chaining</title>
+</head>
+<body>
+    <script>
+        function homework(){
+            return new Promise((resolve,reject)=>{
+                let didHomework = false;
+                setTimeout(()=>{
+                    if(didHomework){
+                        resolve("Homework completed!");
+                    } else {
+                        reject("Homework not completed.");
+                    }
+                }, 5000);
+            })
+        }
+        abc=homework();
+        console.log(abc);
+        setTimeout(() => {
+            abc.then(res=>console.log(res)).catch(err=>console.log(err)).finally(()=>console.log("Homework process finished."));
+        }, 6000);
+
+    </script>
+</body>
+</html>

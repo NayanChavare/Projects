@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #container{
+            background-color: moccasin;
+            width: 400px;
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        input{
+            padding: 10px;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border: none;
+            border-radius: 10px;
+            text-align: right;
+            background-color: lightyellow;
+        }
+        #button-container{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+        button{
+            padding: 20px;
+            font-size: 2rem;
+            border-radius: 10px;
+            width: 95px;
+            border: none;
+            background-color: lightyellow;
+            cursor: pointer;
+            &:active{
+                transform: scale(0.9);
+            }
+            &:hover{
+                background-color: gold;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <input type="text" disabled>
+        <div id="button-container">
+            <button>AC</button>
+            <button>Del</button>
+            <button>/</button>
+            <button>*</button>
+            <button>7</button>
+            <button>8</button>
+            <button>9</button>
+            <button>-</button>
+            <button>4</button>
+            <button>5</button>
+            <button>6</button>
+            <button>+</button>
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>%</button>
+            <button>00</button>
+            <button>0</button>
+            <button>.</button>
+            <button>=</button>
+        </div>
+    </div>
+    <script>
+        let inp=document.querySelector("input");
+        let btn=document.querySelector("#button-container");
+        let arr=["AC","Del","/","*","7","8","9","-","4","5","6","+","1","2","3","%","00","0",".","="];
+        let signs=["/","*","-","+","%"];
+        function calc(e){
+            let val=e.target.innerText;
+            if(arr.includes(val)){
+                if(val==="AC"){
+                    inp.value="";
+                }else if(val==="Del"){
+                    inp.value=inp.value.slice(0,-1);
+                }else if(val==="="){
+                    try{
+                        inp.value=eval(inp.value);
+                    }catch{
+                        inp.value="Error";
+                    }
+                }else{
+                    if(signs.includes(val) && signs.includes(inp.value.slice(-1))){
+                        inp.value=inp.value.slice(0,-1);
+                        inp.value+=val;
+                    }
+                    else{
+                        inp.value+=val;
+                }
+            }
+        }
+    }
+        btn.addEventListener("click",calc)
+    </script>
+</body>
+</html>
