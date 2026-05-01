@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Fira Code", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-editor-bg: var(--bg-editor);
+  --color-editor-line: var(--bg-line);
+  --color-accent: #3b82f6;
+  --color-panel-bg: var(--bg-panel);
+  --color-sidebar-bg: var(--bg-sidebar);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+}
+
+@layer base {
+  :root {
+    --bg-editor: #1e1e1e;
+    --bg-line: #2d2d2d;
+    --bg-panel: #121212;
+    --bg-sidebar: #0a0a0a;
+    --text-primary: oklch(92.8% 0.006 264.531);
+    --text-secondary: oklch(70.7% 0.022 261.325);
+  }
+
+  .light {
+    --bg-editor: #f9fafb;
+    --bg-line: #e5e7eb;
+    --bg-panel: #f3f4f6;
+    --bg-sidebar: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+  }
+
+  body {
+    @apply bg-editor-bg text-primary font-sans selection:bg-accent selection:text-white transition-colors duration-300;
+  }
+
+
+  .light ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300;
+  }
+
+  /* Simple Prism Light Overrides */
+  .light code[class*="language-"],
+  .light pre[class*="language-"] {
+    color: #24292e;
+  }
+
+  .light .token.comment,
+  .light .token.prolog,
+  .light .token.doctype,
+  .light .token.cdata {
+    color: #6a737d;
+  }
+
+  .light .token.punctuation {
+    color: #24292e;
+  }
+
+  .light .token.property,
+  .light .token.tag,
+  .light .token.boolean,
+  .light .token.number,
+  .light .token.constant,
+  .light .token.symbol,
+  .light .token.deleted {
+    color: #005cc5;
+  }
+
+  .light .token.selector,
+  .light .token.attr-name,
+  .light .token.string,
+  .light .token.char,
+  .light .token.builtin,
+  .light .token.inserted {
+    color: #22863a;
+  }
+
+  .light .token.operator,
+  .light .token.entity,
+  .light .token.url,
+  .light .language-css .token.string,
+  .light .style .token.string {
+    color: #d73a49;
+  }
+
+  .light .token.atrule,
+  .light .token.attr-value,
+  .light .token.keyword {
+    color: #d73a49;
+  }
+
+  .light .token.function,
+  .light .token.class-name {
+    color: #6f42c1;
+  }
+
+  .light .token.regex,
+  .light .token.important,
+  .light .token.variable {
+    color: #e36209;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Prism Overrides */
+pre[class*="language-"] {
+  @apply !bg-transparent !m-0 !p-0;
+}
+
+code[class*="language-"] {
+  @apply !font-mono !text-sm;
+}
