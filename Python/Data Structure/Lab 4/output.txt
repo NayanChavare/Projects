@@ -1,0 +1,57 @@
+╔══════════════════════════════════════════════════════════╗
+║  Lab Assignment-4: Trees & Graphs                       ║
+║  Course: Basics of Data Structures (ETCCBD201)          ║
+╚══════════════════════════════════════════════════════════╝
+
+============================================================
+  TASK 1 — Binary Search Tree (BST)
+============================================================
+
+[1] Inserting keys: [50, 30, 70, 20, 40, 60, 80]
+    Inorder after inserts : [20, 30, 40, 50, 60, 70, 80]
+
+[2] Search operations:
+    search(20) → Found ✓
+    search(90) → Not Found ✗
+
+[3] Delete leaf node: 20
+  Deleting 20: Case 1 – leaf node (no children).
+    Inorder after deleting 20 : [30, 40, 50, 60, 70, 80]
+
+[4] Insert 65, then delete 60 (one-child case):
+    Inorder after inserting 65 : [30, 40, 50, 60, 65, 70, 80]
+  Deleting 60: Case 2 – one child (right child only).
+    Inorder after deleting  60 : [30, 40, 50, 65, 70, 80]
+
+[5] Delete node with two children: 30
+  Deleting 30: Case 2 – one child (right child only).
+    Inorder after deleting 30 : [40, 50, 65, 70, 80]
+
+[6] Delete root node with two children: 50
+  Deleting 50: Case 3 – two children.
+  In-order successor is 65.
+  Deleting 65: Case 1 – leaf node (no children).
+    Inorder after deleting 50 : [40, 65, 70, 80]
+
+============================================================
+  TASK 2 — Graph: Adjacency List + BFS + DFS
+============================================================
+
+Adjacency List:
+  A → B(w=2), C(w=4)
+  B → D(w=7), E(w=3)
+  C → E(w=1), F(w=8)
+  D → F(w=5)
+  E → D(w=2), F(w=6)
+  F → (no outgoing edges)
+
+[BFS from A]
+  BFS traversal order : A → B → C → D → E → F
+
+[DFS from A]
+  DFS traversal order : A → B → D → F → E → C
+
+============================================================
+  END OF OUTPUT
+============================================================
+
