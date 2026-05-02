@@ -1,0 +1,144 @@
+
+═══════════════════════════════════════════════════════
+  DEMO MODE — Auto-loading sample dataset
+═══════════════════════════════════════════════════════
+
+>>> Adding 8 users
+[OK] User 'u1' (Alice) added successfully.
+[OK] User 'u2' (Bob) added successfully.
+[OK] User 'u3' (Carol) added successfully.
+[OK] User 'u4' (Dave) added successfully.
+[OK] User 'u5' (Eve) added successfully.
+[OK] User 'u6' (Frank) added successfully.
+[OK] User 'u7' (Grace) added successfully.
+[OK] User 'u8' (Heidi) added successfully.
+
+>>> Updating 2 profiles
+[OK] User 'u1' profile updated.
+[OK] User 'u4' profile updated.
+
+>>> Displaying 3 profiles
+
+────────────────────────────────────────
+  User ID    : u1
+  Name       : Alice
+  Age        : 21
+  Interests  : music, travel, tech, AI
+  City       : Delhi
+  Profession : Engineer
+  Bio        : Loves hiking on weekends.
+────────────────────────────────────────
+
+────────────────────────────────────────
+  User ID    : u3
+  Name       : Carol
+  Age        : 22
+  Interests  : tech, AI, music
+  City       : Bangalore
+  Profession : Data Scientist
+────────────────────────────────────────
+
+────────────────────────────────────────
+  User ID    : u6
+  Name       : Frank
+  Age        : 24
+  Interests  : AI, tech, coding
+  City       : Hyderabad
+  Profession : ML Engineer
+────────────────────────────────────────
+
+>>> Creating 10 friendship connections
+[OK] 'u1' is now friends with 'u2'.
+[OK] 'u1' is now friends with 'u3'.
+[OK] 'u2' is now friends with 'u4'.
+[OK] 'u3' is now friends with 'u5'.
+[OK] 'u3' is now friends with 'u6'.
+[OK] 'u4' is now friends with 'u7'.
+[OK] 'u5' is now friends with 'u6'.
+[OK] 'u5' is now friends with 'u8'.
+[OK] 'u6' is now friends with 'u7'.
+[OK] 'u7' is now friends with 'u8'.
+
+>>> Removing 1 connection (u4 — u7)
+[OK] Connection between 'u4' and 'u7' removed.
+
+>>> Printing friend lists
+
+Friends of Alice (u1):
+  1. Bob (u2)
+  2. Carol (u3)
+
+Friends of Eve (u5):
+  1. Carol (u3)
+  2. Frank (u6)
+  3. Heidi (u8)
+
+═══════════════════════════════════════════════════════
+  BFS: Shortest Path Queries
+═══════════════════════════════════════════════════════
+
+  BFS: Shortest path from 'Alice' → 'Heidi'
+  Path    : Alice (u1) → Carol (u3) → Eve (u5) → Heidi (u8)
+  Degrees : 3 degree(s) of separation
+
+  BFS: Shortest path from 'Bob' → 'Frank'
+  Path    : Bob (u2) → Alice (u1) → Carol (u3) → Frank (u6)
+  Degrees : 3 degree(s) of separation
+
+═══════════════════════════════════════════════════════
+  DFS: Friends-of-Friends Depth Search
+═══════════════════════════════════════════════════════
+
+  DFS: Friends-of-friends of 'Alice' up to depth 2
+   1. Bob (u2)
+   2. Carol (u3)
+   3. Eve (u5)
+   4. Frank (u6)
+   5. Dave (u4)
+  Total reachable: 5 user(s)
+
+  DFS: Friends-of-friends of 'Alice' up to depth 3
+   1. Bob (u2)
+   2. Carol (u3)
+   3. Eve (u5)
+   4. Frank (u6)
+   5. Grace (u7)
+   6. Heidi (u8)
+   7. Dave (u4)
+  Total reachable: 7 user(s)
+
+═══════════════════════════════════════════════════════
+  Friend Suggestions (sorted by common interests)
+═══════════════════════════════════════════════════════
+
+  Friend Suggestions for 'Alice' (u1):
+  #    Name                 ID           Common Interests
+  ────────────────────────────────────────────────────────────
+  1    Eve                  u5           [score=3] AI, music, travel
+  2    Frank                u6           [score=2] AI, tech
+  3    Grace                u7           [score=2] music, travel
+  4    Dave                 u4           [score=0] (none)
+  5    Heidi                u8           [score=0] (none)
+
+═══════════════════════════════════════════════════════
+  Sorting Algorithm Comparison — Unit 3
+═══════════════════════════════════════════════════════
+
+══════════════════════════════════════════════════
+  Sorting Algorithm Comparison
+══════════════════════════════════════════════════
+  Input size  : 8 elements
+  Order       : Descending
+──────────────────────────────────────────────────
+  Insertion Sort : 0.0050 ms  |  O(n²)
+  Merge Sort     : 0.0094 ms  |  O(n log n)
+──────────────────────────────────────────────────
+  Faster on this run: Insertion Sort
+  Note: for n < ~20, Insertion Sort can beat Merge Sort
+        due to lower constant factors and no recursion overhead.
+══════════════════════════════════════════════════
+
+
+═══════════════════════════════════════════════════════
+  Demo Complete ✓
+═══════════════════════════════════════════════════════
