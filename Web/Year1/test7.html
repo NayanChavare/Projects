@@ -1,0 +1,27 @@
+<!-- Three states of a Promise: pending, fulfilled, rejected 
+it represents the state of an asynchronous operation -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promises</title>
+</head>
+<body>
+
+    <script>
+        let flags=false;
+        let promise = new Promise((resolve,reject)=>{
+            if(flags){
+                resolve("Promise resolved successfully");
+            }else{
+                reject("Promise rejected");
+            }
+        })
+        promise.then(res=>console.log(res)).catch(err=>console.log(err));
+        
+    </script>
+
+</body>
+</html>
+
