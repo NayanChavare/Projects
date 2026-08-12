@@ -87,3 +87,38 @@ class Main {
     // }
     
 }
+
+// count number of odd and even numbers in an array
+// import java.util.*;
+
+// class Main {
+//     public static void main(String[] args) {
+//         Scanner sc = new Scanner(System.in);
+//         System.out.println("Array size: ");
+//         int n = sc.nextInt();
+//         int[] arr = new int[n];
+//         for (int i = 0; i < n; i++) {
+//             System.out.println("Enter "+(i+1)+"th element: ");
+//             arr[i] = sc.nextInt();
+//         }
+//         find(arr);
+//         sc.close();     
+//     }
+//     public static void find(int[] arr){
+//         int odd = 0;
+//         int even = 0;
+//         for (int i=0; i<arr.length; i++){
+//             if (arr[i]%2==0){
+//                 even++;
+//           } else {
+//                 odd++;
+//       }
+//     }
+//     System.out.println("Gotten array: ");
+//     for (int i=0; i<arr.length;i++) {
+//       System.out.println(arr[i]);
+//     }
+//     System.out.println("Odd count: "+odd);
+//     System.out.println("Even count: " + even);
+//   }
+// }
