@@ -1,0 +1,17 @@
+{
+  "name": "week3",
+  "version": "1.0.0",
+  "description": "",
+  "author": "nayan",
+  "type": "commonjs",
+  "main": "2.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "date-and-time": "^4.5.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "is-even": "^1.0.0"
+  }
+}

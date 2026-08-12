@@ -1,7 +1,80 @@
-
 import java.util.*;
 
 class Main {
+    // fibonacci series
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Give a number: ");
+        int x = sc.nextInt();
+        System.out.println("Fibonacci series: ");
+        fibonacci(x);
+        System.out.println("\nFibonacci series (recursive): ");
+        fibonacciRecursive(x);
+        sc.close();}
+    public static void fibonacci(int x) {
+        int a = 0, b = 1;
+        System.out.print(a + " " + b + " ");
+        for (int i = 2; i < x; i++) {
+            int c = a + b;
+            System.out.print(c + " ");
+            a = b;
+            b = c;
+        }
+    }
+    public static void fibonacciRecursive(int x) {
+        if (x==0){
+            return 0;
+        }else if (x==1){
+            return 1;
+        }else{
+            return fibonacciRecursive(x-1) + fibonacciRecursive(x-2);
+        }
+    }
+
+    // String reverse
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Give a string: ");
+        String str = sc.nextLine();
+        String reversedStr = reverseString(str);
+        System.out.println("Reversed string: " + reversedStr);
+        sc.close();
+    }
+    public static String reverseString(String str) {
+        StringBuilder reversed = new StringBuilder();
+        for (int i = str.length() - 1; i >= 0; i--) {
+            reversed.append(str.charAt(i));
+        }
+        return reversed.toString();
+    }
+    
+    // // count the  number of digits in a number
+    // public static void main(String[] args) {
+    //     Scanner sc = new Scanner(System.in);
+    //     System.out.println("Give a number: ");
+    //     int x = sc.nextInt();
+    //     int digitCount = countDigits(x);
+    //     System.out.println("Number of digits: " + digitCount);
+    //     sc.close();
+    // }
+    // public static int countDigits(int x) {
+    //     int count = 0;
+    //     while (x != 0) {
+    //         x /= 10;
+    //         count++;
+    //     }
+    //     return count;
+    // }
+    // // recursive method to count the number of digits in a number
+    // public static int countDigitsRecursive(int x) {
+    //     if (x == 0) {
+    //         return 0;
+    //     } else {
+    //         return 1 + countDigitsRecursive(x / 10);
+    //     }
+    // }    
+}
+    
     // public static void main(String[] args) {
     //     Scanner sc = new Scanner(System.in);
     //     System.out.println("Array size");
@@ -85,8 +158,21 @@ class Main {
     //     System.out.println(i);
     //   }
     // }
-    
-}
+//     public static void main(String[] args){
+//         Scanner sc = new Scanner(System.in);
+//         System.out.println("Give a number: ");
+//         int x = sc.nextInt();
+//         System.out.println("Factorial: " + fact(x));
+//         sc.close();
+//     }
+//     public static void fact(int x){
+//         if (x==0 || x==1){
+//             return 1;
+//         } else {
+//             return x * fact(x-1);
+//         }
+//     }
+// }
 
 // count number of odd and even numbers in an array
 // import java.util.*;
