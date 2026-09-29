@@ -19,7 +19,7 @@ const userModel = mongoose.model("User", userSchema);
 // step 4: create a function to connect to the database and perform CRUD operations
 const main = async () => {
   // 1. connect to the database
-  await mongoose.connect("mongodb://localhost:27017/employee");
+  await mongoose.connect("mongodb+srv://nayan:nayan2312@cluster0.ssnkfvv.mongodb.net/?appName=Cluster0/employee");
   console.log("Database connected");
 
   // 2. Discconect from the database
