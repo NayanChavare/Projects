@@ -9,6 +9,6 @@ const userSchema = new mongoose.Schema({
     status: Boolean
 });
 
-const User = mongoose.model('User', userSchema);
+const UserModel = mongoose.model('User', userSchema);
 
-module.exports = { connect, User };
+module.exports = { connect, UserModel };
