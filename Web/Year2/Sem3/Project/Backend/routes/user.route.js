@@ -47,4 +47,23 @@ userRouter.post("/login", async (req, res) => {
   }
 });
 
+// Search users by email in MongoDB Atlas
+userRouter.get("/search", async (req, res) => {
+  const { email } = req.query;
+  if (!email || !email.trim()) {
+    return res.status(400).send({ msg: "Please provide an email to search", users: [] });
+  }
+
+  try {
+    // Case-insensitive search matching email, excludes password
+    const users = await userModel.find(
+      { email: { $regex: email.trim(), $options: "i" } },
+      "name email _id"
+    );
+    res.send({ users });
+  } catch (error) {
+    res.status(500).send({ msg: "Error searching users in MongoDB", error: error.message, users: [] });
+  }
+});
+
 module.exports = { userRouter };

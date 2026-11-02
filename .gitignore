@@ -6,3 +6,6 @@ Web/Year2/Sem3/Week5/day1/node_modules/
 Web/Year2/Sem3/Week5/day2/node_modules/
 Web/Year2/Sem3/Week6/day1/.env
 .gitignore
+Web/Year2/Sem3/Project/Backend/.env
+Web/Year2/Sem3/Project/Backend/node_modules
+Web/Year2/Sem3/Project/Frontend/node_modules

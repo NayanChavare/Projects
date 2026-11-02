@@ -2,18 +2,20 @@ const express = require("express");
 
 const { connection } = require("./db");
 const { userRouter } = require("./routes/user.route");
-const {auth} = require("./middlewere/auth.middlewere")
+const { messageRouter } = require("./routes/message.route");
+const { auth } = require("./middlewere/auth.middlewere");
 
 const app = express();
 app.use(express.json());
 
 app.use("/user", userRouter);
+app.use("/message", messageRouter);
 
 app.get("/", (req, res) => {
   res.send("HOME Page");
 });
 
-// Middlewere
+// Middleware
 
 app.use(auth);
 // Private route
