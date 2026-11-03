@@ -177,7 +177,11 @@ export function ChatArea({ onOpenProfile }) {
                           <span
                             key={idx}
                             className="reaction-badge"
-                            onClick={() => reactToMessage(message.id, emoji)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              reactToMessage(message.id, emoji);
+                            }}
+                            title={`Toggle ${emoji} reaction`}
                           >
                             {emoji}
                           </span>
@@ -194,7 +198,11 @@ export function ChatArea({ onOpenProfile }) {
                               key={emoji}
                               type="button"
                               className="emoji-quick-btn"
-                              onClick={() => reactToMessage(message.id, emoji)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                reactToMessage(message.id, emoji);
+                              }}
+                              title={`React with ${emoji}`}
                             >
                               {emoji}
                             </button>
@@ -204,7 +212,10 @@ export function ChatArea({ onOpenProfile }) {
                           type="button"
                           className="toolbar-btn"
                           title="Copy text"
-                          onClick={() => handleCopyMessage(message.text, message.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyMessage(message.text, message.id);
+                          }}
                         >
                           <Copy size={13} />
                           {copiedId === message.id && <span className="copy-tooltip">Copied</span>}
@@ -213,7 +224,10 @@ export function ChatArea({ onOpenProfile }) {
                           type="button"
                           className="toolbar-btn text-danger"
                           title="Delete message"
-                          onClick={() => deleteMessage(message.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteMessage(message.id);
+                          }}
                         >
                           <Trash2 size={13} />
                         </button>

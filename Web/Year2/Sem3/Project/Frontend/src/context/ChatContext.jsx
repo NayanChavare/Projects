@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { playMessageSound } from '../utils/sound';
-import { sendMessageApi, fetchConversationApi, fetchThreadsApi, deleteConversationApi } from '../services/api';
+import {
+  sendMessageApi,
+  fetchConversationApi,
+  fetchThreadsApi,
+  deleteConversationApi,
+  reactToMessageApi,
+} from '../services/api';
 
 const ChatContext = createContext(null);
 
@@ -75,7 +81,7 @@ export function ChatProvider({ children }) {
               minute: '2-digit',
             }),
             status: m.status || 'delivered',
-            reactions: [],
+            reactions: Array.isArray(m.reactions) ? m.reactions : [],
           };
         });
 
@@ -223,7 +229,9 @@ export function ChatProvider({ children }) {
     );
   };
 
-  const reactToMessage = (messageId, emoji) => {
+  // React to a message and persist the emoji in MongoDB Atlas
+  const reactToMessage = async (messageId, emoji) => {
+    // Optimistic UI toggle
     setChats((prev) =>
       prev.map((chat) => {
         if (chat.id === activeChatId) {
@@ -244,6 +252,35 @@ export function ChatProvider({ children }) {
         return chat;
       })
     );
+
+    // If message is temporary unsaved message, skip server call
+    if (typeof messageId === 'string' && messageId.startsWith('temp-')) {
+      return;
+    }
+
+    try {
+      const res = await reactToMessageApi({ messageId, emoji });
+      if (res.success && res.reactions) {
+        setChats((prev) =>
+          prev.map((chat) => {
+            if (chat.id === activeChatId) {
+              return {
+                ...chat,
+                messages: chat.messages.map((m) => {
+                  if (m.id === messageId) {
+                    return { ...m, reactions: res.reactions };
+                  }
+                  return m;
+                }),
+              };
+            }
+            return chat;
+          })
+        );
+      }
+    } catch (err) {
+      console.error('Failed to persist reaction in MongoDB:', err);
+    }
   };
 
   const deleteMessage = (messageId) => {

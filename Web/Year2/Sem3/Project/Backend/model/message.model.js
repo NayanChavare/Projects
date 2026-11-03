@@ -6,6 +6,7 @@ const messageSchema = new mongoose.Schema(
     receiver: { type: String, required: true }, // receiver email
     text: { type: String, required: true },
     status: { type: String, default: "sent" },
+    reactions: { type: [String], default: [] },
   },
   { timestamps: true }
 );

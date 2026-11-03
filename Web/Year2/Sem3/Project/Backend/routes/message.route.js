@@ -1,5 +1,6 @@
 const express = require("express");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 const { messageModel } = require("../model/message.model");
 const { userModel } = require("../model/user.model");
 
@@ -64,6 +65,7 @@ messageRouter.post("/send", async (req, res) => {
       receiver: receiver.trim().toLowerCase(),
       text: encryptedText, // Encrypted ciphertext stored in MongoDB Atlas
       status: "delivered",
+      reactions: [],
     });
 
     await newMessage.save();
@@ -71,6 +73,7 @@ messageRouter.post("/send", async (req, res) => {
     // Return message with decrypted text for client convenience
     const responseObj = newMessage.toObject();
     responseObj.text = text.trim();
+    responseObj.reactions = [];
 
     res.status(201).send({ msg: "Message saved securely to MongoDB", message: responseObj });
   } catch (error) {
@@ -104,6 +107,7 @@ messageRouter.get("/conversation", async (req, res) => {
     const decryptedMessages = messages.map((m) => {
       const obj = m.toObject();
       obj.text = decryptText(m.text);
+      obj.reactions = Array.isArray(m.reactions) ? m.reactions : [];
       return obj;
     });
 
@@ -113,6 +117,52 @@ messageRouter.get("/conversation", async (req, res) => {
     res.status(500).send({ msg: "Failed to fetch messages", error: error.message, messages: [] });
   }
 });
+
+// Toggle an emoji reaction on a message in MongoDB Atlas
+const handleReaction = async (req, res) => {
+  const { messageId, emoji } = req.body;
+
+  if (!messageId || !emoji) {
+    return res.status(400).send({ msg: "messageId and emoji are required" });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(messageId)) {
+    return res.status(400).send({ msg: "Invalid message ID format" });
+  }
+
+  try {
+    const message = await messageModel.findById(messageId);
+    if (!message) {
+      return res.status(404).send({ msg: "Message not found" });
+    }
+
+    const currentReactions = Array.isArray(message.reactions) ? [...message.reactions] : [];
+    const index = currentReactions.indexOf(emoji);
+
+    if (index > -1) {
+      // Emoji already present: toggle off (remove)
+      currentReactions.splice(index, 1);
+    } else {
+      // Emoji not present: toggle on (add)
+      currentReactions.push(emoji);
+    }
+
+    message.reactions = currentReactions;
+    await message.save();
+
+    res.send({
+      msg: "Reaction updated successfully",
+      messageId: message._id,
+      reactions: message.reactions,
+    });
+  } catch (error) {
+    console.error("Error updating reaction:", error);
+    res.status(500).send({ msg: "Failed to update reaction", error: error.message });
+  }
+};
+
+messageRouter.patch("/react", handleReaction);
+messageRouter.post("/react", handleReaction);
 
 // Delete conversation between two users from MongoDB Atlas
 messageRouter.delete("/conversation", async (req, res) => {

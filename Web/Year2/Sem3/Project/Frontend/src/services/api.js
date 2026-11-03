@@ -138,6 +138,31 @@ export async function sendMessageApi({ sender, receiver, text }) {
 }
 
 /**
+ * React to a message with an emoji (persisted in MongoDB Atlas)
+ * @param {Object} param0 - { messageId, emoji }
+ */
+export async function reactToMessageApi({ messageId, emoji }) {
+  try {
+    const response = await fetch(`${BASE_URL}/message/react`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messageId, emoji }),
+    });
+    const data = await response.json();
+    return {
+      success: response.ok,
+      reactions: data.reactions,
+      messageId: data.messageId,
+    };
+  } catch (error) {
+    console.error('React to message API error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Fetch messages between two users from MongoDB Atlas
  * @param {string} user1
  * @param {string} user2
