@@ -190,6 +190,30 @@ messageRouter.delete("/conversation", async (req, res) => {
   }
 });
 
+// Delete a specific individual message by ID from MongoDB Atlas
+const handleDeleteMessage = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send({ msg: "Valid message ID is required" });
+  }
+
+  try {
+    const deleted = await messageModel.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).send({ msg: "Message not found" });
+    }
+
+    res.send({ msg: "Message deleted successfully", messageId: id });
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    res.status(500).send({ msg: "Failed to delete message", error: error.message });
+  }
+};
+
+messageRouter.delete("/single/:id", handleDeleteMessage);
+messageRouter.delete("/:id", handleDeleteMessage);
+
 // Fetch all conversation threads/partners for a user from MongoDB Atlas
 messageRouter.get("/threads", async (req, res) => {
   const { email } = req.query;

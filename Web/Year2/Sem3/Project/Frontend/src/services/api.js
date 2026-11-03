@@ -210,6 +210,27 @@ export async function deleteConversationApi(user1, user2) {
 }
 
 /**
+ * Delete an individual message by ID from MongoDB Atlas
+ * @param {string} messageId
+ */
+export async function deleteMessageApi(messageId) {
+  try {
+    if (!messageId) return { success: false, msg: 'Missing message ID' };
+    const response = await fetch(`${BASE_URL}/message/${encodeURIComponent(messageId)}`, {
+      method: 'DELETE',
+    });
+    const data = await response.json();
+    return {
+      success: response.ok,
+      data,
+    };
+  } catch (error) {
+    console.error('Delete individual message error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Fetch all conversation threads for a user from MongoDB Atlas
  * @param {string} email
  */

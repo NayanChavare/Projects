@@ -7,6 +7,7 @@ import {
   fetchThreadsApi,
   deleteConversationApi,
   reactToMessageApi,
+  deleteMessageApi,
 } from '../services/api';
 
 const ChatContext = createContext(null);
@@ -283,18 +284,38 @@ export function ChatProvider({ children }) {
     }
   };
 
-  const deleteMessage = (messageId) => {
+  // Delete an individual message from conversation and MongoDB Atlas
+  const deleteMessage = async (messageId) => {
+    if (!messageId) return;
+
+    // Optimistically remove from state
     setChats((prev) =>
       prev.map((chat) => {
         if (chat.id === activeChatId) {
+          const remainingMessages = chat.messages.filter((m) => m.id !== messageId);
+          const lastMsg = remainingMessages.length > 0 ? remainingMessages[remainingMessages.length - 1] : null;
           return {
             ...chat,
-            messages: chat.messages.filter((m) => m.id !== messageId),
+            messages: remainingMessages,
+            lastMessage: lastMsg ? lastMsg.text : '',
+            lastMessageTime: lastMsg ? lastMsg.timestamp : '',
           };
         }
         return chat;
       })
     );
+
+    // If temporary unsaved message, skip server delete
+    if (typeof messageId === 'string' && messageId.startsWith('temp-')) {
+      return;
+    }
+
+    try {
+      await deleteMessageApi(messageId);
+      loadThreads();
+    } catch (err) {
+      console.error('Failed to delete message from MongoDB:', err);
+    }
   };
 
   return (
