@@ -51,7 +51,7 @@ function decryptText(cipherText) {
 
 // Save a new chat message in MongoDB Atlas (with AES-256-CBC encryption)
 messageRouter.post("/send", async (req, res) => {
-  const { sender, receiver, text } = req.body;
+  const { sender, receiver, text, isGroup, groupId, senderName } = req.body;
 
   if (!sender || !receiver || !text || !text.trim()) {
     return res.status(400).send({ msg: "Sender, receiver, and message text are required" });
@@ -60,10 +60,40 @@ messageRouter.post("/send", async (req, res) => {
   try {
     const encryptedText = encryptText(text.trim());
 
+    if (isGroup || groupId || !receiver.includes("@")) {
+      // Group message
+      const targetGroup = (groupId || receiver).toString();
+      const newGroupMsg = new messageModel({
+        sender: sender.trim().toLowerCase(),
+        receiver: targetGroup,
+        groupId: targetGroup,
+        isGroup: true,
+        senderName: senderName || sender.split("@")[0],
+        text: encryptedText,
+        status: "delivered",
+        reactions: [],
+      });
+
+      await newGroupMsg.save();
+
+      const responseObj = newGroupMsg.toObject();
+      responseObj.text = text.trim();
+      responseObj.reactions = [];
+
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("receive_group_message", responseObj);
+      }
+
+      return res.status(201).send({ msg: "Group message saved securely", message: responseObj });
+    }
+
+    // Direct 1-on-1 message between users
     const newMessage = new messageModel({
       sender: sender.trim().toLowerCase(),
       receiver: receiver.trim().toLowerCase(),
-      text: encryptedText, // Encrypted ciphertext stored in MongoDB Atlas
+      isGroup: false,
+      text: encryptedText,
       status: "delivered",
       reactions: [],
     });
@@ -74,6 +104,12 @@ messageRouter.post("/send", async (req, res) => {
     const responseObj = newMessage.toObject();
     responseObj.text = text.trim();
     responseObj.reactions = [];
+
+    // Notify connected WebSocket clients instantly
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("receive_message", responseObj);
+    }
 
     res.status(201).send({ msg: "Message saved securely to MongoDB", message: responseObj });
   } catch (error) {
@@ -96,6 +132,8 @@ messageRouter.get("/conversation", async (req, res) => {
   try {
     const messages = await messageModel
       .find({
+        isGroup: { $ne: true },
+        groupId: { $in: [null, ""] },
         $or: [
           { sender: u1, receiver: u2 },
           { sender: u2, receiver: u1 },
@@ -150,6 +188,15 @@ const handleReaction = async (req, res) => {
     message.reactions = currentReactions;
     await message.save();
 
+    // Notify connected WebSocket clients instantly
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("reaction_updated", {
+        messageId: message._id,
+        reactions: message.reactions,
+      });
+    }
+
     res.send({
       msg: "Reaction updated successfully",
       messageId: message._id,
@@ -177,11 +224,19 @@ messageRouter.delete("/conversation", async (req, res) => {
 
   try {
     const result = await messageModel.deleteMany({
+      isGroup: { $ne: true },
+      groupId: { $in: [null, ""] },
       $or: [
         { sender: u1, receiver: u2 },
         { sender: u2, receiver: u1 },
       ],
     });
+
+    // Notify connected WebSocket clients instantly
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("conversation_deleted", { user1: u1, user2: u2 });
+    }
 
     res.send({ msg: "Conversation deleted successfully", deletedCount: result.deletedCount });
   } catch (error) {
@@ -202,6 +257,12 @@ const handleDeleteMessage = async (req, res) => {
     const deleted = await messageModel.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).send({ msg: "Message not found" });
+    }
+
+    // Notify connected WebSocket clients instantly
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("message_deleted", { messageId: id });
     }
 
     res.send({ msg: "Message deleted successfully", messageId: id });
@@ -225,9 +286,11 @@ messageRouter.get("/threads", async (req, res) => {
   const userEmail = email.trim().toLowerCase();
 
   try {
-    // Find all messages involving this user
+    // Find all 1-on-1 direct messages involving this user (strictly exclude group messages)
     const messages = await messageModel
       .find({
+        isGroup: { $ne: true },
+        groupId: { $in: [null, ""] },
         $or: [{ sender: userEmail }, { receiver: userEmail }],
       })
       .sort({ createdAt: -1 });
@@ -236,7 +299,11 @@ messageRouter.get("/threads", async (req, res) => {
     const contactMap = new Map();
 
     for (const msg of messages) {
+      if (msg.isGroup || msg.groupId) continue;
       const contactEmail = msg.sender === userEmail ? msg.receiver : msg.sender;
+      // Skip if contactEmail is not an actual email address (e.g. is a MongoDB ObjectId)
+      if (!contactEmail || !contactEmail.includes("@")) continue;
+
       if (!contactMap.has(contactEmail)) {
         contactMap.set(contactEmail, {
           email: contactEmail,
@@ -267,4 +334,4 @@ messageRouter.get("/threads", async (req, res) => {
   }
 });
 
-module.exports = { messageRouter };
+module.exports = { messageRouter, encryptText, decryptText };

@@ -12,29 +12,60 @@ import {
   X,
   Mail,
   MessageSquare,
+  Users,
+  Info,
+  Zap,
+  Radio,
+  ShieldCheck,
+  MessageSquarePlus,
+  Sparkles,
 } from 'lucide-react';
 
 const COMMON_EMOJIS = ['😊', '😂', '👍', '❤️', '🔥', '🎉', '🚀', '🙌', '💡', '✨', '💻', '👏', '🙏', '💯', '😎'];
 
-export function ChatArea({ onOpenProfile }) {
-  const { activeChat, sendMessage, reactToMessage, deleteMessage, deleteConversation } = useChat();
+export function ChatArea({ onOpenProfile, onOpenNewChat }) {
+  const {
+    activeChat,
+    sendMessage,
+    reactToMessage,
+    deleteMessage,
+    deleteConversation,
+    partnerTyping,
+    sendTypingStatus,
+    isUserOnline,
+  } = useChat();
+
   const { user } = useAuth();
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
-  const [activeReactionMessageId, setActiveReactionMessageId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const typingTimerRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat?.messages]);
+  }, [activeChat?.messages, partnerTyping]);
+
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    // Send typing notification over WebSocket (for 1-on-1 chats)
+    if (!activeChat?.isGroup) {
+      sendTypingStatus(true);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        sendTypingStatus(false);
+      }, 1500);
+    }
+  };
 
   const handleSend = (e) => {
     e?.preventDefault();
     if (!inputText.trim()) return;
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    sendTypingStatus(false);
     sendMessage(inputText);
     setInputText('');
     setShowEmojiPicker(false);
@@ -56,43 +87,180 @@ export function ChatArea({ onOpenProfile }) {
 
   const handleDeleteConversation = () => {
     setShowChatMenu(false);
-    if (window.confirm(`Are you sure you want to delete the conversation with ${activeChat.name}? All messages will be permanently removed.`)) {
-      deleteConversation(activeChat.email);
+    const label = activeChat.isGroup ? `group "${activeChat.name}"` : `conversation with ${activeChat.name}`;
+    if (window.confirm(`Are you sure you want to remove the ${label}?`)) {
+      deleteConversation(activeChat.isGroup ? activeChat.id : activeChat.email);
     }
   };
 
+  // Modern Welcoming Empty State Dashboard
   if (!activeChat) {
     return (
       <div className="pulse-empty-state">
-        <div className="empty-content">
-          <div className="empty-illustration-pulse">
-            <MessageSquare size={54} />
+        <div className="empty-dashboard-card">
+          <div className="empty-glow-orb"></div>
+          
+          <div className="empty-brand-badge">
+            <div className="empty-brand-icon-wrap">
+              <MessageSquare size={36} />
+            </div>
+            <span className="pulse-version-pill">
+              <Sparkles size={12} /> Live PulseChat
+            </span>
           </div>
-          <h2>PulseChat Messenger</h2>
-          <p>Search any user by email to initiate a conversation.</p>
+
+          <h2 className="empty-title">Welcome to PulseChat</h2>
+          <p className="empty-subtitle">
+            Connect instantly with peers, start study groups, and chat in real time with continuous WebSocket sync.
+          </p>
+
+          <div className="empty-quick-actions">
+            <button
+              className="btn-empty-action primary"
+              onClick={onOpenNewChat}
+              title="Search users to start a direct chat"
+            >
+              <MessageSquarePlus size={18} />
+              <span>Start New Chat</span>
+            </button>
+            <button
+              className="btn-empty-action secondary"
+              onClick={onOpenNewChat}
+              title="Create a new study or project group"
+            >
+              <Users size={18} />
+              <span>Create Group</span>
+            </button>
+          </div>
+
+          <div className="empty-features-grid">
+            <div className="empty-feature-card">
+              <div className="feature-icon-bubble emerald">
+                <Zap size={18} />
+              </div>
+              <div className="feature-info">
+                <strong>Instant WebSocket</strong>
+                <span>Continuous bi-directional push</span>
+              </div>
+            </div>
+
+            <div className="empty-feature-card">
+              <div className="feature-icon-bubble blue">
+                <Radio size={18} />
+              </div>
+              <div className="feature-info">
+                <strong>Live Presence</strong>
+                <span>Real-time online status indicators</span>
+              </div>
+            </div>
+
+            <div className="empty-feature-card">
+              <div className="feature-icon-bubble purple">
+                <Users size={18} />
+              </div>
+              <div className="feature-info">
+                <strong>Group Channels</strong>
+                <span>Multi-peer rooms & team chat</span>
+              </div>
+            </div>
+
+            <div className="empty-feature-card">
+              <div className="feature-icon-bubble teal">
+                <ShieldCheck size={18} />
+              </div>
+              <div className="feature-info">
+                <strong>Safe & Private</strong>
+                <span>Local storage & protected sync</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="empty-shortcut-hint">
+            <span>Tip: Select a chat from the sidebar or press <strong>Start New Chat</strong> above.</span>
+          </div>
         </div>
       </div>
     );
   }
 
+  const isContactOnline = !activeChat.isGroup && isUserOnline(activeChat.email);
+
   return (
     <section className="pulse-chat-area">
-      {/* Top Chat Header */}
+      {/* Top Glassmorphic Chat Header */}
       <header className="chat-header">
-        <div className="chat-header-info" onClick={onOpenProfile} title="View Details">
+        <div
+          className="chat-header-info"
+          onClick={() => onOpenProfile && onOpenProfile(activeChat)}
+          title={`Click to view ${activeChat.isGroup ? 'group details' : activeChat.name + "'s profile"}`}
+        >
           <div className="header-avatar-wrap">
             <img src={activeChat.avatar} alt={activeChat.name} className="header-avatar-img" />
+            {!activeChat.isGroup && (
+              <span
+                className={`header-presence-dot ${isContactOnline ? 'online' : 'offline'}`}
+                title={isContactOnline ? 'Online now' : 'Offline'}
+              />
+            )}
           </div>
+
           <div className="header-text-block">
-            <h3 className="header-chat-name">{activeChat.name}</h3>
-            <span className="header-chat-subtext">
-              <Mail size={12} className="inline-icon" />
-              {activeChat.email}
-            </span>
+            <div className="header-title-row">
+              <h3 className="header-chat-name">{activeChat.name}</h3>
+              {activeChat.isGroup && (
+                <span className="group-badge-pill">GROUP</span>
+              )}
+            </div>
+
+            <div className="header-chat-subtext">
+              {activeChat.isGroup ? (
+                <span className="subtext-item">
+                  <Users size={12} className="inline-icon" />
+                  <span>{(activeChat.members || []).length} members</span>
+                  {activeChat.description && (
+                    <span className="group-desc-snip"> • {activeChat.description}</span>
+                  )}
+                </span>
+              ) : (
+                <span className="subtext-item">
+                  <Mail size={12} className="inline-icon" />
+                  <span className="contact-email-snip">{activeChat.email}</span>
+                  {partnerTyping ? (
+                    <span className="typing-status-indicator">
+                      <span className="typing-indicator-pill">
+                        <span className="typing-dot"></span>
+                        <span className="typing-dot"></span>
+                        <span className="typing-dot"></span>
+                      </span>
+                      <span>typing...</span>
+                    </span>
+                  ) : isContactOnline ? (
+                    <span className="online-status-indicator">
+                      <span className="status-bullet online"></span>
+                      <span>Online</span>
+                    </span>
+                  ) : (
+                    <span className="offline-status-indicator">
+                      <span className="status-bullet offline"></span>
+                      <span>Offline</span>
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* Header Action Buttons */}
         <div className="chat-header-actions">
+          <button
+            className="chat-action-btn"
+            onClick={() => onOpenProfile && onOpenProfile(activeChat)}
+            title={activeChat.isGroup ? 'Group details' : `${activeChat.name}'s profile`}
+          >
+            <Info size={19} />
+          </button>
+
           <div className="menu-container">
             <button
               className="chat-action-btn"
@@ -105,11 +273,22 @@ export function ChatArea({ onOpenProfile }) {
             {showChatMenu && (
               <div className="dropdown-menu-pulse right-aligned">
                 <button
+                  onClick={() => {
+                    setShowChatMenu(false);
+                    onOpenProfile && onOpenProfile(activeChat);
+                  }}
+                  className="dropdown-item"
+                >
+                  <Users size={15} />
+                  <span>{activeChat.isGroup ? 'Group Details' : 'Contact Info'}</span>
+                </button>
+                <div className="dropdown-divider"></div>
+                <button
                   onClick={handleDeleteConversation}
                   className="dropdown-item item-danger"
                 >
                   <Trash2 size={15} />
-                  <span>Delete Conversation</span>
+                  <span>{activeChat.isGroup ? 'Leave Group' : 'Delete Conversation'}</span>
                 </button>
               </div>
             )}
@@ -122,10 +301,22 @@ export function ChatArea({ onOpenProfile }) {
         {/* Contact Information Banner */}
         <div className="conversation-start-banner">
           <div className="contact-circle-large">
-            {activeChat.name ? activeChat.name.charAt(0).toUpperCase() : 'U'}
+            {activeChat.isGroup ? (
+              <Users size={28} />
+            ) : (
+              activeChat.name ? activeChat.name.charAt(0).toUpperCase() : 'U'
+            )}
           </div>
           <h4>{activeChat.name}</h4>
-          <p>{activeChat.email}</p>
+          <p>
+            {activeChat.isGroup
+              ? `Group channel with ${(activeChat.members || []).length} participants`
+              : activeChat.email}
+          </p>
+          <span className="encrypted-badge">
+            <ShieldCheck size={13} />
+            <span>Messages are encrypted</span>
+          </span>
         </div>
 
         {/* Date Separator Pill */}
@@ -133,11 +324,14 @@ export function ChatArea({ onOpenProfile }) {
           <span className="date-pill">TODAY</span>
         </div>
 
-        {/* Messages Stream */}
+        {/* Messages Stream with Clear Partitioning */}
         <div className="messages-stream">
           {activeChat.messages.length === 0 ? (
             <div className="no-messages-placeholder">
-              <p>No messages yet. Send a message below to start chatting with {activeChat.name}!</p>
+              <p>
+                No messages yet. Send a message below to start chatting in{' '}
+                <strong>{activeChat.name}</strong>!
+              </p>
             </div>
           ) : (
             activeChat.messages.map((message) => {
@@ -148,95 +342,101 @@ export function ChatArea({ onOpenProfile }) {
                   key={message.id}
                   className={`message-row ${isMe ? 'message-out' : 'message-in'}`}
                 >
-                  <div
-                    className={`message-bubble ${isMe ? 'bubble-out' : 'bubble-in'}`}
-                    onMouseEnter={() => setActiveReactionMessageId(message.id)}
-                    onMouseLeave={() => setActiveReactionMessageId(null)}
-                  >
-                    {/* Message Text */}
-                    <div className="message-text">{message.text}</div>
+                  <div className={`message-bubble ${isMe ? 'bubble-out' : 'bubble-in'}`}>
+                    {/* In Group chats, show sender's name above incoming messages */}
+                    {activeChat.isGroup && !isMe && (
+                      <div className="group-sender-name">
+                        {message.senderName || message.sender}
+                      </div>
+                    )}
 
-                    {/* Bubble Meta (Time & Status) */}
+                    <p className="message-text">{message.text}</p>
+
                     <div className="bubble-meta">
                       <span className="message-timestamp">{message.timestamp}</span>
-                      {isMe && (
-                        <span className="message-status-icons">
+                      {isMe && !activeChat.isGroup && (
+                        <span className="bubble-status-icon">
                           {message.status === 'read' ? (
-                            <CheckCheck size={16} className="check-read" />
+                            <CheckCheck size={14} className="check-read" />
+                          ) : message.status === 'delivered' ? (
+                            <CheckCheck size={14} className="check-delivered" />
                           ) : (
-                            <Check size={16} className="check-sent" />
+                            <Check size={14} className="check-sent" />
                           )}
                         </span>
                       )}
                     </div>
 
-                    {/* Message Reactions Display */}
+                    {/* Emoji Reactions List Display */}
                     {message.reactions && message.reactions.length > 0 && (
                       <div className="reactions-tray">
-                        {message.reactions.map((emoji, idx) => (
-                          <span
-                            key={idx}
-                            className="reaction-badge"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              reactToMessage(message.id, emoji);
-                            }}
-                            title={`Toggle ${emoji} reaction`}
-                          >
-                            {emoji}
-                          </span>
-                        ))}
+                        {Array.from(new Set(message.reactions)).map((emoji) => {
+                          const count = message.reactions.filter((e) => e === emoji).length;
+                          return (
+                            <button
+                              key={emoji}
+                              className="reaction-badge"
+                              onClick={() => reactToMessage(message.id, emoji)}
+                              title={`Reacted with ${emoji}`}
+                            >
+                              <span>{emoji}</span>
+                              {count > 1 && (
+                                <span className="reaction-count">{count}</span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
 
-                    {/* Hover Actions Tray */}
-                    {activeReactionMessageId === message.id && (
-                      <div className={`message-hover-toolbar ${isMe ? 'toolbar-left' : 'toolbar-right'}`}>
-                        <div className="quick-emojis">
-                          {['👍', '❤️', '😂', '🔥', '🎉'].map((emoji) => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              className="emoji-quick-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                reactToMessage(message.id, emoji);
-                              }}
-                              title={`React with ${emoji}`}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                        <button
-                          type="button"
-                          className="toolbar-btn"
-                          title="Copy text"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyMessage(message.text, message.id);
-                          }}
-                        >
-                          <Copy size={13} />
-                          {copiedId === message.id && <span className="copy-tooltip">Copied</span>}
-                        </button>
-                        <button
-                          type="button"
-                          className="toolbar-btn text-danger"
-                          title="Delete message"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteMessage(message.id);
-                          }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                    {/* Message Action Menu Hover Bar */}
+                    <div className={`message-hover-toolbar ${isMe ? 'toolbar-left' : 'toolbar-right'}`}>
+                      <div className="quick-emojis">
+                        {['👍', '❤️', '😂', '🔥', '🎉', '🚀'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            className="emoji-quick-btn"
+                            onClick={() => reactToMessage(message.id, emoji)}
+                            title={`React ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
                       </div>
-                    )}
+                      <button
+                        className="toolbar-btn"
+                        title={copiedId === message.id ? 'Copied!' : 'Copy Text'}
+                        onClick={() => handleCopyMessage(message.text, message.id)}
+                      >
+                        <Copy size={13} />
+                        {copiedId === message.id && <span className="copy-tooltip">Copied!</span>}
+                      </button>
+                      <button
+                        className="toolbar-btn btn-delete"
+                        title="Delete Message"
+                        onClick={() => deleteMessage(message.id)}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })
+          )}
+
+          {/* Typing Indicator Bubble in Stream */}
+          {partnerTyping && !activeChat.isGroup && (
+            <div className="message-row message-in">
+              <div className="message-bubble bubble-in typing-bubble-canvas">
+                <span className="typing-label-name">{activeChat.name}</span>
+                <div className="typing-dots-anim">
+                  <span className="dot dot-1"></span>
+                  <span className="dot dot-2"></span>
+                  <span className="dot dot-3"></span>
+                </div>
+              </div>
+            </div>
           )}
 
           <div ref={messagesEndRef} />
@@ -247,7 +447,7 @@ export function ChatArea({ onOpenProfile }) {
       {showEmojiPicker && (
         <div className="emoji-picker-drawer">
           <div className="emoji-drawer-header">
-            <span>Emoji Reactions & Smileys</span>
+            <span>Quick Reactions & Emojis</span>
             <button className="close-drawer-btn" onClick={() => setShowEmojiPicker(false)}>
               <X size={15} />
             </button>
@@ -285,8 +485,12 @@ export function ChatArea({ onOpenProfile }) {
             ref={inputRef}
             rows={1}
             value={inputText}
-            placeholder={`Message ${activeChat.name}...`}
-            onChange={(e) => setInputText(e.target.value)}
+            placeholder={
+              activeChat.isGroup
+                ? `Message #${activeChat.name}...`
+                : `Message ${activeChat.name}...`
+            }
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             className="message-textarea"
           />
@@ -297,7 +501,7 @@ export function ChatArea({ onOpenProfile }) {
           disabled={!inputText.trim()}
           className="send-button-pulse"
           onClick={handleSend}
-          title="Send Message"
+          title="Send Message (Enter)"
         >
           <Send size={18} />
         </button>

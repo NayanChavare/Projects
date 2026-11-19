@@ -7,29 +7,44 @@ import { ProfileModal } from '../components/ProfileModal';
 export function ChatPage({ darkMode, setDarkMode }) {
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+
+  const handleOpenMyProfile = () => {
+    setSelectedProfile(null);
+    setIsProfileOpen(true);
+  };
+
+  const handleOpenContactProfile = (target) => {
+    setSelectedProfile(target);
+    setIsProfileOpen(true);
+  };
 
   return (
     <div className="pulse-app-container">
-      <div className="pulse-background-strip"></div>
-
       <main className="pulse-window">
         <Sidebar
           onOpenNewChat={() => setIsNewChatOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={handleOpenMyProfile}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
         />
-        <ChatArea onOpenProfile={() => setIsProfileOpen(true)} />
+        <ChatArea
+          onOpenProfile={handleOpenContactProfile}
+          onOpenNewChat={() => setIsNewChatOpen(true)}
+        />
       </main>
 
-      {/* New Chat Modal */}
+      {/* New Chat / Create Group Modal */}
       {isNewChatOpen && (
         <NewChatModal onClose={() => setIsNewChatOpen(false)} />
       )}
 
-      {/* Profile Modal */}
+      {/* Profile / Contact Info Modal */}
       {isProfileOpen && (
-        <ProfileModal onClose={() => setIsProfileOpen(false)} />
+        <ProfileModal
+          onClose={() => setIsProfileOpen(false)}
+          targetProfile={selectedProfile}
+        />
       )}
     </div>
   );

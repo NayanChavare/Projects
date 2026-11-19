@@ -9,10 +9,12 @@ import {
   Eye,
   EyeOff,
   Server,
-  MessageCircle,
   Zap,
-  Shield,
+  Users,
+  Radio,
+  ShieldCheck,
   CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 export function LoginPage() {
@@ -46,152 +48,172 @@ export function LoginPage() {
 
   return (
     <div className="auth-overlay">
-      {/* Brand Top Header Strip */}
-      <div className="pulse-top-strip">
-        <div className="pulse-brand">
-          <div className="brand-icon-wrap">
-            <MessageSquare size={26} className="brand-svg" />
-          </div>
-          <span className="brand-title">PULSECHAT</span>
-        </div>
-      </div>
-
       <div className="auth-card-container">
         <div className="auth-card">
-          {/* Form Column */}
+          {/* Left Form Column */}
           <div className="auth-form-column">
-            <div className="auth-header">
-              <h2 className="auth-heading">Sign In to PulseChat</h2>
-              <p className="auth-subheading">
-                Enter your email address and password to access your messages
-              </p>
+            <div>
+              <div className="auth-brand-badge">
+                <div className="brand-icon-wrap">
+                  <MessageSquare size={22} className="brand-svg" />
+                </div>
+                <div className="brand-text-col">
+                  <span className="brand-title-badge">PulseChat</span>
+                  <span className="brand-subtitle-badge">Real-Time Messaging</span>
+                </div>
+              </div>
+
+              <div className="auth-header">
+                <h2 className="auth-heading">Sign In</h2>
+                <p className="auth-subheading">
+                  Welcome back! Enter your registered credentials to access your direct and group chats.
+                </p>
+              </div>
+
+              {/* Server Status Warning if offline */}
+              {!backendStatus.online && (
+                <div className="server-notice-card">
+                  <Server size={18} className="notice-icon" />
+                  <div className="notice-text">
+                    <strong>Backend Server Offline</strong>
+                    <p>Start the server in <code>Backend/</code> on port 8080.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Alert */}
+              {error && (
+                <div className="auth-alert error-alert">
+                  <AlertCircle size={17} style={{ flexShrink: 0 }} />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Success Alert */}
+              {successMsg && (
+                <div className="auth-alert success-alert">
+                  <CheckCircle size={17} style={{ flexShrink: 0 }} />
+                  <span>{successMsg}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="auth-form">
+                <div className="input-group">
+                  <label htmlFor="login-email">Email Address</label>
+                  <div className="input-wrapper">
+                    <Mail size={18} className="field-icon" />
+                    <input
+                      id="login-email"
+                      type="email"
+                      name="email"
+                      placeholder="e.g. alex@student.edu"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label htmlFor="login-password">Password</label>
+                  <div className="input-wrapper">
+                    <Lock size={18} className="field-icon" />
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      placeholder="Enter your password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn-primary-pulse"
+                >
+                  {isLoading ? (
+                    <span className="spinner-loader"></span>
+                  ) : (
+                    <>
+                      <span>Sign In to Account</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
-
-            {/* Server Status Warning if offline */}
-            {!backendStatus.online && (
-              <div className="server-notice-card">
-                <Server size={18} className="notice-icon" />
-                <div className="notice-text">
-                  <strong>Server offline on port 8080.</strong>
-                  <p>Run <code>npm run server</code> in <code>Backend/</code> to connect.</p>
-                </div>
-              </div>
-            )}
-
-            {/* Error Message */}
-            {error && (
-              <div className="auth-alert error-alert">
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {successMsg && (
-              <div className="auth-alert success-alert">
-                <CheckCircle size={16} />
-                <span>{successMsg}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="auth-form">
-              <div className="input-group">
-                <label htmlFor="login-email">Email Address</label>
-                <div className="input-wrapper">
-                  <Mail size={18} className="field-icon" />
-                  <input
-                    id="login-email"
-                    type="email"
-                    name="email"
-                    placeholder="e.g. user@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="login-password">Password</label>
-                <div className="input-wrapper">
-                  <Lock size={18} className="field-icon" />
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn-primary-pulse"
-              >
-                {isLoading ? (
-                  <span className="spinner-loader"></span>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
 
             <div className="auth-switch-row">
               <p>
                 Don't have an account yet?{' '}
                 <Link to="/signup" className="link-btn">
-                  Sign Up
+                  Create Account
                 </Link>
               </p>
             </div>
           </div>
 
-          {/* Right Info Column */}
+          {/* Right Info Showcase Column */}
           <div className="auth-info-column">
             <div className="auth-info-header">
               <div className="brand-logo-badge">
-                <MessageSquare size={32} />
+                <MessageSquare size={28} />
               </div>
-              <h3>PulseChat</h3>
-              <p>Simple, Fast & Secure Messaging</p>
+              <h3>PulseChat Platform</h3>
+              <p>Simple, continuous, real-time messaging designed for students.</p>
             </div>
 
             <div className="features-list">
               <div className="feature-item">
-                <MessageCircle size={18} className="check-icon" />
-                <div>
-                  <h4>Direct Messaging</h4>
-                  <p>Send and receive messages in real time with read receipts and emoji reactions.</p>
+                <div className="feature-icon-circle">
+                  <Zap size={18} />
+                </div>
+                <div className="feature-content">
+                  <h4>Continuous WebSocket Link</h4>
+                  <p>Instant direct communication with live message delivery and emoji reactions.</p>
                 </div>
               </div>
 
               <div className="feature-item">
-                <Zap size={18} className="check-icon" />
-                <div>
-                  <h4>Instant Contact Search</h4>
-                  <p>Find any user by email and initiate a conversation immediately.</p>
+                <div className="feature-icon-circle">
+                  <Users size={18} />
+                </div>
+                <div className="feature-content">
+                  <h4>Collaborative Group Chats</h4>
+                  <p>Create project & study rooms with your peers and message all members in real-time.</p>
                 </div>
               </div>
 
               <div className="feature-item">
-                <Shield size={18} className="check-icon" />
-                <div>
-                  <h4>Private & Protected</h4>
-                  <p>Encrypted credentials and authenticated user sessions.</p>
+                <div className="feature-icon-circle">
+                  <Radio size={18} />
+                </div>
+                <div className="feature-content">
+                  <h4>Live Presence & Typing</h4>
+                  <p>See exactly when classmates are online and get notified when someone is typing.</p>
+                </div>
+              </div>
+
+              <div className="feature-item">
+                <div className="feature-icon-circle">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="feature-content">
+                  <h4>Secure & Protected</h4>
+                  <p>Encrypted data transfer and authenticated token sessions for safe chatting.</p>
                 </div>
               </div>
             </div>

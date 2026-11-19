@@ -117,14 +117,14 @@ export async function searchUsersByEmail(email) {
  * Send a message to be saved in MongoDB Atlas
  * @param {Object} param0 - { sender, receiver, text }
  */
-export async function sendMessageApi({ sender, receiver, text }) {
+export async function sendMessageApi({ sender, receiver, text, isGroup, groupId, senderName }) {
   try {
     const response = await fetch(`${BASE_URL}/message/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ sender, receiver, text }),
+      body: JSON.stringify({ sender, receiver, text, isGroup, groupId, senderName }),
     });
     const data = await response.json();
     return {
@@ -248,6 +248,91 @@ export async function fetchThreadsApi(email) {
   } catch (error) {
     console.error('Fetch threads error:', error);
     return { success: false, threads: [] };
+  }
+}
+
+/**
+ * Create a new group chat in MongoDB Atlas
+ * @param {Object} param0 - { name, description, members, creator }
+ */
+export async function createGroupApi({ name, description, members, creator }) {
+  try {
+    const response = await fetch(`${BASE_URL}/group/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description, members, creator }),
+    });
+    const data = await response.json();
+    return {
+      success: response.ok,
+      group: data.group,
+      message: data.msg,
+    };
+  } catch (error) {
+    console.error('Create group error:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Fetch all groups the user belongs to
+ * @param {string} email
+ */
+export async function fetchGroupsApi(email) {
+  try {
+    if (!email) return { success: true, groups: [] };
+    const response = await fetch(`${BASE_URL}/group/list?email=${encodeURIComponent(email)}`);
+    const data = await response.json();
+    return {
+      success: true,
+      groups: data.groups || [],
+    };
+  } catch (error) {
+    console.error('Fetch groups error:', error);
+    return { success: false, groups: [] };
+  }
+}
+
+/**
+ * Fetch all messages for a specific group
+ * @param {string} groupId
+ */
+export async function fetchGroupMessagesApi(groupId) {
+  try {
+    if (!groupId) return { success: true, messages: [] };
+    const response = await fetch(`${BASE_URL}/group/${encodeURIComponent(groupId)}/messages`);
+    const data = await response.json();
+    return {
+      success: true,
+      messages: data.messages || [],
+    };
+  } catch (error) {
+    console.error('Fetch group messages error:', error);
+    return { success: false, messages: [] };
+  }
+}
+
+/**
+ * Add a member to a group
+ * @param {string} groupId
+ * @param {string} email
+ */
+export async function addGroupMemberApi(groupId, email) {
+  try {
+    const response = await fetch(`${BASE_URL}/group/${encodeURIComponent(groupId)}/add-member`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    return {
+      success: response.ok,
+      group: data.group,
+      message: data.msg,
+    };
+  } catch (error) {
+    console.error('Add group member error:', error);
+    return { success: false, message: error.message };
   }
 }
 

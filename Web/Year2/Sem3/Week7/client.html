@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<script src="https://cdn.socket.io/4.8.4/socket.io.min.js" integrity="sha384-fBrXvbDtHoeKWJ/hcA6M+YGueiDW+h45I7V6F2kD1S8bOkrF9rZYPLVkCR6BLR/1" crossorigin="anonymous"></script>
+</head>
+<body>
+	<h1>Welcome to Socket.io</h1>
+	
+</body>
+
+</html>
+
+<script>
+  socket = io('ws://localhost:3000/',{
+    "transports": ['websocket']
+  });
+  socket.emit('two', 'Hello from client');
+  socket.on('one', (data) => {
+    console.log(data);
+  });
+  socket.on('join',(data) => {
+    console.log(data);
+  })
+  socket.on('announcement',(data) => {
+    console.log(data);
+  })
+</script>
