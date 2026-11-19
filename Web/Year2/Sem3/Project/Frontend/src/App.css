@@ -1668,7 +1668,7 @@ input, button, textarea {
 }
 
 .message-hover-toolbar::after {
-  content: ;
+  content: "";
   position: absolute;
   top: 100%;
   left: 0;
