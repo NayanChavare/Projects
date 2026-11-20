@@ -44,12 +44,16 @@ export function ChatArea({ onOpenProfile, onOpenNewChat }) {
   const [copiedId, setCopiedId] = useState(null);
 
   const messagesEndRef = useRef(null);
+  const messagesCanvasRef = useRef(null);
   const inputRef = useRef(null);
   const typingTimerRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat?.messages, partnerTyping]);
+    // Scroll the messages container internally without shifting the window/body
+    if (messagesCanvasRef.current) {
+      messagesCanvasRef.current.scrollTop = messagesCanvasRef.current.scrollHeight;
+    }
+  }, [activeChat?.messages, partnerTyping, activeChat?.id]);
 
   const handleInputChange = (e) => {
     setInputText(e.target.value);
@@ -310,7 +314,7 @@ export function ChatArea({ onOpenProfile, onOpenNewChat }) {
       </header>
 
       {/* Messages Canvas */}
-      <div className="chat-messages-canvas">
+      <div className="chat-messages-canvas" ref={messagesCanvasRef}>
         {/* Contact Information Banner */}
         <div className="conversation-start-banner">
           <div className="contact-circle-large">
