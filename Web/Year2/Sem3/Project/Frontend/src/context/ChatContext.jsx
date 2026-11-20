@@ -770,6 +770,7 @@ export function ChatProvider({ children }) {
         chats,
         activeChat,
         activeChatId,
+        setActiveChatId,
         selectChat,
         sendMessage,
         startChatWithUser,

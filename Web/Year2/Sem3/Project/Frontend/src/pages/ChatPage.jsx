@@ -3,8 +3,10 @@ import { Sidebar } from '../components/Sidebar';
 import { ChatArea } from '../components/ChatArea';
 import { NewChatModal } from '../components/NewChatModal';
 import { ProfileModal } from '../components/ProfileModal';
+import { useChat } from '../context/ChatContext';
 
 export function ChatPage({ darkMode, setDarkMode }) {
+  const { activeChatId } = useChat();
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -20,7 +22,7 @@ export function ChatPage({ darkMode, setDarkMode }) {
   };
 
   return (
-    <div className="pulse-app-container">
+    <div className={`pulse-app-container ${activeChatId ? 'has-active-chat' : 'no-active-chat'}`}>
       <main className="pulse-window">
         <Sidebar
           onOpenNewChat={() => setIsNewChatOpen(true)}

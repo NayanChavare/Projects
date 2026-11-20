@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   MessageSquarePlus,
   Sparkles,
+  ArrowLeft,
 } from 'lucide-react';
 
 const COMMON_EMOJIS = ['😊', '😂', '👍', '❤️', '🔥', '🎉', '🚀', '🙌', '💡', '✨', '💻', '👏', '🙏', '💯', '😎'];
@@ -26,6 +27,7 @@ const COMMON_EMOJIS = ['😊', '😂', '👍', '❤️', '🔥', '🎉', '🚀',
 export function ChatArea({ onOpenProfile, onOpenNewChat }) {
   const {
     activeChat,
+    setActiveChatId,
     sendMessage,
     reactToMessage,
     deleteMessage,
@@ -189,8 +191,18 @@ export function ChatArea({ onOpenProfile, onOpenNewChat }) {
     <section className="pulse-chat-area">
       {/* Top Glassmorphic Chat Header */}
       <header className="chat-header">
-        <div
-          className="chat-header-info"
+        <div className="header-left-cluster">
+          <button
+            type="button"
+            className="mobile-back-btn"
+            onClick={() => setActiveChatId(null)}
+            title="Back to chats"
+            aria-label="Back to chats"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div
+            className="chat-header-info"
           onClick={() => onOpenProfile && onOpenProfile(activeChat)}
           title={`Click to view ${activeChat.isGroup ? 'group details' : activeChat.name + "'s profile"}`}
         >
@@ -248,6 +260,7 @@ export function ChatArea({ onOpenProfile, onOpenNewChat }) {
                 </span>
               )}
             </div>
+          </div>
           </div>
         </div>
 

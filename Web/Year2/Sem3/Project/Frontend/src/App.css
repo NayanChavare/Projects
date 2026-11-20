@@ -557,6 +557,7 @@ input, button, textarea {
 .pulse-app-container {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   position: relative;
   display: flex;
   align-items: center;
@@ -586,19 +587,48 @@ input, button, textarea {
   width: calc(100vw - 48px);
   max-width: 1560px;
   height: calc(100vh - 48px);
+  height: calc(100dvh - 48px);
   background-color: var(--bg-app);
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.1), 0 0 1px 1px rgba(15, 23, 42, 0.06);
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: 400px 1fr;
   overflow: hidden;
   border: 1px solid var(--border-light);
+}
+
+/* Header Left Cluster: Back Button + Info */
+.header-left-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mobile-back-btn {
+  display: none;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.mobile-back-btn:hover {
+  background-color: var(--bg-hover-chat);
 }
 
 @media (max-width: 900px) {
   .pulse-window {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     border-radius: 0;
     grid-template-columns: 320px 1fr;
   }
@@ -2557,4 +2587,368 @@ input, button, textarea {
 .btn-danger-pulse:hover {
   background-color: var(--pulse-danger);
   color: #ffffff;
+}
+
+/* =========================================================
+   COMPREHENSIVE MOBILE OPTIMIZATIONS (Smartphones <= 768px)
+   ========================================================= */
+@media (max-width: 768px) {
+  /* 1. App Container & Window full viewport reset */
+  .pulse-app-container {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .pulse-window {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 2. WhatsApp/Telegram View-Switching Pattern */
+  .pulse-sidebar {
+    width: 100vw;
+    min-width: 100vw;
+    height: 100%;
+    border-right: none;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .pulse-chat-area {
+    width: 100vw;
+    min-width: 100vw;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  /* When no chat is selected on mobile: Show Sidebar, Hide ChatArea */
+  .pulse-app-container.no-active-chat .pulse-sidebar {
+    display: flex;
+  }
+  .pulse-app-container.no-active-chat .pulse-chat-area {
+    display: none;
+  }
+
+  /* When a chat is selected on mobile: Hide Sidebar, Show ChatArea */
+  .pulse-app-container.has-active-chat .pulse-sidebar {
+    display: none;
+  }
+  .pulse-app-container.has-active-chat .pulse-chat-area {
+    display: flex;
+  }
+
+  /* 3. Mobile Back Button in Chat Header */
+  .mobile-back-btn {
+    display: inline-flex;
+    margin-right: 2px;
+  }
+
+  /* 4. Chat Header & Information */
+  .chat-header {
+    height: 60px;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .chat-header-info {
+    gap: 10px;
+    padding: 2px 4px;
+    margin-left: 0;
+    overflow: hidden;
+  }
+
+  .header-avatar-img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .header-chat-name {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  .header-chat-subtext {
+    font-size: 0.72rem;
+  }
+
+  .contact-email-snip {
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-header-actions {
+    gap: 4px;
+  }
+
+  .chat-action-btn {
+    padding: 7px;
+  }
+
+  /* 5. Messages Canvas */
+  .chat-messages-canvas {
+    padding: 16px 12px;
+    background-size: 20px 20px;
+  }
+
+  .conversation-start-banner {
+    padding: 14px 0 16px;
+    margin-bottom: 16px;
+  }
+
+  .contact-circle-large {
+    width: 52px;
+    height: 52px;
+    font-size: 1.3rem;
+  }
+
+  .conversation-start-banner h4 {
+    font-size: 1.05rem;
+  }
+
+  .conversation-start-banner p {
+    font-size: 0.8rem;
+    padding: 0 10px;
+    text-align: center;
+  }
+
+  .encrypted-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+
+  /* 6. Message Bubbles on Mobile */
+  .message-bubble {
+    max-width: 86%;
+    padding: 8px 12px 7px;
+    border-radius: 16px;
+  }
+
+  .message-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .bubble-meta {
+    margin-left: 10px;
+    margin-top: 2px;
+  }
+
+  .message-timestamp {
+    font-size: 0.64rem;
+  }
+
+  /* Mobile Hover Toolbar: Position cleanly and adjust size */
+  .message-hover-toolbar {
+    top: -34px;
+    padding: 2px 6px;
+    gap: 3px;
+  }
+
+  .emoji-quick-btn {
+    font-size: 0.9rem;
+    padding: 2px;
+  }
+
+  .toolbar-btn {
+    padding: 4px;
+  }
+
+  /* 7. Chat Input Dock (Floating Mobile Bar) */
+  .chat-input-bar {
+    min-height: 60px;
+    padding: 8px 12px;
+    gap: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  }
+
+  .input-field-wrapper {
+    padding: 8px 14px;
+    border-radius: 20px;
+  }
+
+  .message-textarea {
+    font-size: 0.92rem;
+    max-height: 90px;
+  }
+
+  .input-action-btn {
+    padding: 7px;
+  }
+
+  .send-button-pulse {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* 8. Emoji Drawer on Mobile */
+  .emoji-picker-drawer {
+    padding: 10px 14px;
+    max-height: 150px;
+  }
+
+  .emoji-grid {
+    gap: 8px;
+  }
+
+  .emoji-item-btn {
+    font-size: 1.25rem;
+    padding: 2px;
+  }
+
+  /* 9. Sidebar Optimization on Mobile */
+  .sidebar-header {
+    height: 60px;
+    padding: 8px 14px;
+  }
+
+  .user-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .user-display-name {
+    font-size: 0.9rem;
+  }
+
+  .user-email-tag {
+    font-size: 0.7rem;
+    max-width: 120px;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .action-icon-btn {
+    padding: 7px;
+  }
+
+  .sidebar-search-area {
+    padding: 8px 12px;
+  }
+
+  .search-box {
+    height: 38px;
+    padding: 0 10px;
+  }
+
+  .chat-filter-tabs {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .filter-pill {
+    padding: 5px 11px;
+    font-size: 0.78rem;
+  }
+
+  .chat-item {
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .chat-avatar-img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .chat-title {
+    font-size: 0.9rem;
+  }
+
+  .last-message-snippet {
+    font-size: 0.8rem;
+  }
+
+  /* 10. Modals on Mobile */
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .modal-card {
+    max-width: 100%;
+    border-radius: 16px;
+    max-height: 90vh;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-header {
+    padding: 14px 18px;
+  }
+
+  .modal-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+  }
+
+  .modal-footer {
+    margin-top: 14px;
+  }
+
+  /* 11. Empty Dashboard Card */
+  .pulse-empty-state {
+    padding: 16px;
+  }
+
+  .empty-dashboard-card {
+    padding: 28px 18px 24px;
+    border-radius: 18px;
+  }
+
+  .empty-brand-icon-wrap {
+    width: 60px;
+    height: 60px;
+  }
+
+  .empty-brand-icon-wrap svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .empty-title {
+    font-size: 1.35rem;
+  }
+
+  .empty-subtitle {
+    font-size: 0.84rem;
+    margin-bottom: 18px;
+  }
+
+  .empty-quick-actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .empty-features-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .empty-feature-card {
+    padding: 10px 12px;
+  }
 }
