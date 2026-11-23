@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithGoogle } from '../services/firebase';
-import { PhoneOtpModal } from '../components/PhoneOtpModal';
+import { searchUsersByEmail } from '../services/api';
+import { PhoneInputModal } from '../components/PhoneInputModal';
 import {
   MessageSquare,
   ArrowRight,
@@ -17,11 +18,12 @@ import {
   ShieldCheck,
   CheckCircle,
   AlertCircle,
-  Phone,
+  RefreshCw,
+  MailCheck,
 } from 'lucide-react';
 
 export function LoginPage() {
-  const { login, loginWithFirebase, backendStatus, isLoading, error, setError } = useAuth();
+  const { login, loginWithFirebase, resendVerification, backendStatus, isLoading, error, setError } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -30,11 +32,12 @@ export function LoginPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendStatus, setResendStatus] = useState('');
 
-  // Phone OTP Modal State
-  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
-  const [otpModalUser, setOtpModalUser] = useState(null);
-  const [otpInitialPhone, setOtpInitialPhone] = useState('');
+  // Phone Modal State for Google Login if phone is missing
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [pendingGoogleUser, setPendingGoogleUser] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -44,6 +47,8 @@ export function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccessMsg('');
+    setUnverifiedEmail('');
+    setResendStatus('');
 
     const res = await login(formData.email, formData.password);
     if (res.success) {
@@ -51,10 +56,19 @@ export function LoginPage() {
       setTimeout(() => {
         navigate('/');
       }, 300);
+    } else if (res.unverified) {
+      setUnverifiedEmail(formData.email);
     }
   };
 
-  // Google Sign-in flow -> Requires Phone verification
+  const handleResendLink = async () => {
+    if (!unverifiedEmail) return;
+    setResendStatus('Resending verification link...');
+    const res = await resendVerification(formData.email, formData.password);
+    setResendStatus(res.message);
+  };
+
+  // Google Sign-in flow
   const handleGoogleSignIn = async () => {
     setError(null);
     setSuccessMsg('');
@@ -62,29 +76,42 @@ export function LoginPage() {
       const gUser = await signInWithGoogle();
       if (!gUser) return;
 
-      // Google authenticated. If user already has phone, sync immediately; otherwise prompt OTP modal
-      if (gUser.phoneNumber) {
+      // Check if user already exists in MongoDB with a saved phone
+      let existingPhone = gUser.phoneNumber || '';
+      if (!existingPhone && gUser.email) {
+        try {
+          const search = await searchUsersByEmail(gUser.email);
+          const matched = (search.users || []).find(
+            (u) => u.email?.toLowerCase() === gUser.email.toLowerCase()
+          );
+          if (matched && matched.phone) {
+            existingPhone = matched.phone;
+          }
+        } catch (e) {
+          console.warn('Could not search existing user phone:', e);
+        }
+      }
+
+      if (existingPhone) {
+        // Phone already known, sync and proceed
         const res = await loginWithFirebase({
           name: gUser.displayName || gUser.email?.split('@')[0],
           email: gUser.email,
-          phone: gUser.phoneNumber,
+          phone: existingPhone,
           uid: gUser.uid,
           authProvider: 'google',
         });
         if (res.success) {
-          setSuccessMsg('Authenticated with Google!');
-          setTimeout(() => navigate('/'), 300);
+          navigate('/');
         }
       } else {
-        // Open OTP modal to verify phone number for this Google user
-        setOtpModalUser({
+        // Prompt for phone number via clean modal (no SMS / no OTP)
+        setPendingGoogleUser({
           name: gUser.displayName || gUser.email?.split('@')[0],
           email: gUser.email,
           uid: gUser.uid,
-          isGoogle: true,
         });
-        setOtpInitialPhone('');
-        setIsOtpModalOpen(true);
+        setIsPhoneModalOpen(true);
       }
     } catch (err) {
       console.error('Google sign-in error:', err);
@@ -94,37 +121,20 @@ export function LoginPage() {
     }
   };
 
-  // Direct Phone OTP Login
-  const handleOpenPhoneLogin = () => {
-    setError(null);
-    setSuccessMsg('');
-    setOtpModalUser(null);
-    setOtpInitialPhone('');
-    setIsOtpModalOpen(true);
-  };
-
-  // Callback when Phone OTP is verified
-  const handleOtpVerified = async ({ phone, uid, userDetails }) => {
-    const payload = userDetails?.isGoogle
-      ? {
-          name: userDetails.name,
-          email: userDetails.email,
-          phone: phone,
-          uid: userDetails.uid,
-          authProvider: 'google',
-        }
-      : {
-          name: phone,
-          email: `${phone.replace(/[^0-9]/g, '')}@pulsechat.phone`,
-          phone: phone,
-          uid: uid,
-          authProvider: 'phone',
-        };
+  // Callback from PhoneInputModal for Google user
+  const handlePhoneSubmitted = async ({ phone, userDetails }) => {
+    setIsPhoneModalOpen(false);
+    const payload = {
+      name: userDetails?.name || pendingGoogleUser?.name,
+      email: userDetails?.email || pendingGoogleUser?.email,
+      phone: phone,
+      uid: userDetails?.uid || pendingGoogleUser?.uid,
+      authProvider: 'google',
+    };
 
     const res = await loginWithFirebase(payload);
     if (res.success) {
-      setSuccessMsg('Phone verified & logged in successfully!');
-      setTimeout(() => navigate('/'), 300);
+      navigate('/');
     }
   };
 
@@ -148,7 +158,7 @@ export function LoginPage() {
               <div className="auth-header">
                 <h2 className="auth-heading">Sign In</h2>
                 <p className="auth-subheading">
-                  Welcome back! Sign in via Google, Phone OTP, or your registered credentials.
+                  Welcome back! Sign in via Google or your verified email credentials.
                 </p>
               </div>
 
@@ -158,7 +168,7 @@ export function LoginPage() {
                   <Server size={18} className="notice-icon" />
                   <div className="notice-text">
                     <strong>Backend Server Offline</strong>
-                    <p>Start the server in <code>Backend/</code> on port 8080.</p>
+                    <p>Waiting for connection to backend...</p>
                   </div>
                 </div>
               )}
@@ -171,6 +181,53 @@ export function LoginPage() {
                 </div>
               )}
 
+              {/* Unverified Email Warning Card */}
+              {unverifiedEmail && (
+                <div
+                  style={{
+                    padding: '14px',
+                    borderRadius: '10px',
+                    background: 'rgba(234, 179, 8, 0.12)',
+                    border: '1px solid rgba(234, 179, 8, 0.3)',
+                    color: '#fef08a',
+                    marginBottom: '16px',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <MailCheck size={18} color="#eab308" />
+                    <strong style={{ color: '#fef08a' }}>Email Verification Required</strong>
+                  </div>
+                  <p style={{ margin: '0 0 10px', color: '#fef9c3', lineHeight: 1.5, fontSize: '0.825rem' }}>
+                    A verification link was sent to <strong>{unverifiedEmail}</strong>. Please click the link in your email to activate your account.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendLink}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#fff',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <RefreshCw size={13} />
+                    <span>Resend verification link</span>
+                  </button>
+                  {resendStatus && (
+                    <span style={{ display: 'block', marginTop: '6px', fontSize: '0.75rem', color: '#86efac' }}>
+                      {resendStatus}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Success Alert */}
               {successMsg && (
                 <div className="auth-alert success-alert">
@@ -179,7 +236,7 @@ export function LoginPage() {
                 </div>
               )}
 
-              {/* Google & Phone Quick Auth Buttons */}
+              {/* Google Quick Auth Button */}
               <div className="social-auth-cluster">
                 <button
                   type="button"
@@ -207,20 +264,10 @@ export function LoginPage() {
                   </svg>
                   <span>Continue with Google</span>
                 </button>
-
-                <button
-                  type="button"
-                  className="btn-social-auth btn-phone"
-                  onClick={handleOpenPhoneLogin}
-                  disabled={isLoading}
-                >
-                  <Phone size={17} color="#059669" />
-                  <span>Sign in with Phone (OTP)</span>
-                </button>
               </div>
 
               <div className="auth-separator">
-                <span>or with password</span>
+                <span>or sign in with password</span>
               </div>
 
               <form onSubmit={handleSubmit} className="auth-form">
@@ -337,8 +384,8 @@ export function LoginPage() {
                   <ShieldCheck size={16} />
                 </div>
                 <div className="feature-content">
-                  <h4>Secure Phone & Google Auth</h4>
-                  <p>Two-factor verified registration with Firebase SMS OTP.</p>
+                  <h4>Verified Accounts</h4>
+                  <p>Protected with email verification and verified Google authentication.</p>
                 </div>
               </div>
             </div>
@@ -346,13 +393,12 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Phone OTP Modal */}
-      <PhoneOtpModal
-        isOpen={isOtpModalOpen}
-        onClose={() => setIsOtpModalOpen(false)}
-        onSuccess={handleOtpVerified}
-        initialPhone={otpInitialPhone}
-        userDetails={otpModalUser}
+      {/* Phone Input Modal for Google Login if phone is missing */}
+      <PhoneInputModal
+        isOpen={isPhoneModalOpen}
+        onClose={() => setIsPhoneModalOpen(false)}
+        onSubmit={handlePhoneSubmitted}
+        userDetails={pendingGoogleUser}
       />
     </div>
   );

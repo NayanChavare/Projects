@@ -7,14 +7,14 @@ const BASE_URL = import.meta.env.VITE_API_URL || '';
  * Register a new user in MongoDB Atlas via Backend
  * @param {Object} userData - { name, email, password }
  */
-export async function registerUser({ name, email, password }) {
+export async function registerUser({ name, email, password, phone }) {
   try {
     const response = await fetch(`${BASE_URL}/user/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, phone: phone || '' }),
     });
 
     const text = await response.text();

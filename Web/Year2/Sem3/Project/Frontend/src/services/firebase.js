@@ -3,8 +3,10 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
   signOut,
 } from "firebase/auth";
 
@@ -29,33 +31,34 @@ export async function signInWithGoogle() {
   return result.user;
 }
 
-// Phone Recaptcha setup helper
-export function setupRecaptcha(elementId, callback) {
-  if (window.recaptchaVerifier) {
+// Register with Email and send verification link
+export async function registerWithEmailFirebase(email, password, name) {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  if (name && userCredential.user) {
     try {
-      window.recaptchaVerifier.clear();
+      await updateProfile(userCredential.user, { displayName: name });
     } catch (e) {
-      console.warn("Recaptcha clear error:", e);
+      console.warn("Could not set displayName:", e);
     }
   }
-
-  window.recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
-    size: "invisible",
-    callback: (response) => {
-      if (callback) callback(response);
-    },
-    "expired-callback": () => {
-      console.warn("Recaptcha expired");
-    },
-  });
-
-  return window.recaptchaVerifier;
+  // Send email verification link directly from Firebase
+  await sendEmailVerification(userCredential.user);
+  return userCredential.user;
 }
 
-// Send OTP to phone
-export async function sendOtpToPhone(phoneNumber, appVerifier) {
-  const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-  return confirmationResult;
+// Login with Email in Firebase
+export async function loginWithEmailFirebase(email, password) {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  return userCredential.user;
+}
+
+// Resend verification email
+export async function resendVerificationLink(user) {
+  if (user) {
+    await sendEmailVerification(user);
+    return true;
+  }
+  return false;
 }
 
 export { signOut };

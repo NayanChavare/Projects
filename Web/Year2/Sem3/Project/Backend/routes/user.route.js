@@ -6,18 +6,34 @@ const { userModel } = require("../model/user.model");
 const userRouter = express.Router();
 
 userRouter.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
+
+  if (!email || !name) {
+    return res.status(400).send("Name and Email are required");
+  }
 
   try {
-    bcrypt.hash(password, 5, async (err, hash) => {
-      if (hash) {
-        const user = new userModel({ name, email, password: hash });
-        await user.save();
-        res.send("User Registered successfully");
+    const existing = await userModel.findOne({ email: email.toLowerCase().trim() });
+    if (existing) {
+      return res.status(400).send("User already registered with this email");
+    }
+
+    bcrypt.hash(password || "defaultPass123", 5, async (err, hash) => {
+      if (err || !hash) {
+        return res.status(500).send("Can't Registered successfully");
       }
+      const user = new userModel({
+        name,
+        email: email.toLowerCase().trim(),
+        password: hash,
+        phone: phone ? phone.trim() : "",
+        authProvider: "local",
+      });
+      await user.save();
+      res.send("User Registered successfully");
     });
   } catch (error) {
-    res.send("Can't Registered successfully");
+    res.status(500).send("Can't Registered successfully");
   }
 });
 
@@ -25,12 +41,20 @@ userRouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await userModel.find({ email });
+    const user = await userModel.find({ email: (email || "").toLowerCase().trim() });
     if (user.length > 0) {
       bcrypt.compare(password, user[0].password, (err, result) => {
         if (result) {
           const token = jwt.sign({ disha: "anshu" }, "coding");
-          res.send({ msg: "Login Successfully", token });
+          res.send({
+            msg: "Login Successfully",
+            token,
+            user: {
+              name: user[0].name,
+              email: user[0].email,
+              phone: user[0].phone || "",
+            },
+          });
         } else {
           res.send("Wrong Password");
         }
@@ -44,7 +68,7 @@ userRouter.post("/login", async (req, res) => {
 });
 
 /**
- * Handle Firebase Verified Login / Registration (Google / Phone)
+ * Handle Firebase Verified Login / Registration (Google / Phone / Verified Email)
  * Authenticates user and issues backend JWT session token
  */
 userRouter.post("/firebase-sync", async (req, res) => {
@@ -55,7 +79,7 @@ userRouter.post("/firebase-sync", async (req, res) => {
   }
 
   try {
-    const searchEmail = (email || `${phone.replace(/[^0-9]/g, "")}@pulsechat.phone`).toLowerCase().trim();
+    const searchEmail = (email || `${(phone || "").replace(/[^0-9]/g, "")}@pulsechat.phone`).toLowerCase().trim();
     let user = await userModel.findOne({
       $or: [
         { email: searchEmail },
@@ -65,7 +89,7 @@ userRouter.post("/firebase-sync", async (req, res) => {
     });
 
     if (user) {
-      // Update phone or name if newly verified
+      // Update phone or name if provided
       let updated = false;
       if (phone && !user.phone) {
         user.phone = phone.trim();
@@ -77,6 +101,10 @@ userRouter.post("/firebase-sync", async (req, res) => {
       }
       if (authProvider && !user.authProvider) {
         user.authProvider = authProvider;
+        updated = true;
+      }
+      if (name && (!user.name || user.name.includes("@"))) {
+        user.name = name;
         updated = true;
       }
       if (updated) {
@@ -91,7 +119,7 @@ userRouter.post("/firebase-sync", async (req, res) => {
         phone: phone ? phone.trim() : "",
         firebaseUid: uid || "",
         authProvider: authProvider || "firebase",
-        password: "", // Handled securely via Firebase OTP / OAuth
+        password: "", // Handled securely via Firebase OAuth / Email Verification
       });
       await user.save();
     }
@@ -113,15 +141,14 @@ userRouter.post("/firebase-sync", async (req, res) => {
   }
 });
 
-// Search users by email or phone in MongoDB Atlas
+// Search users by email, phone, or name in MongoDB Atlas
 userRouter.get("/search", async (req, res) => {
   const { email } = req.query;
   if (!email || !email.trim()) {
-    return res.status(400).send({ msg: "Please provide an email to search", users: [] });
+    return res.status(400).send({ msg: "Please provide a query to search", users: [] });
   }
 
   try {
-    // Case-insensitive search matching email or phone
     const users = await userModel.find(
       {
         $or: [
