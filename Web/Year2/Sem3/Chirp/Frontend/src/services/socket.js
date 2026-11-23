@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'https://projects-ss5j.onrender.com';
 
 let socket = null;
 

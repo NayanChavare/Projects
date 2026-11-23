@@ -1,5 +1,5 @@
 // Chirp API Service with automatic JWT refresh and error resilience
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://projects-ss5j.onrender.com';
 
 /**
  * Get stored auth token
