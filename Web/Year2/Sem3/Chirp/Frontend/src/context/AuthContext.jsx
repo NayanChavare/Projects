@@ -9,7 +9,11 @@ import {
   clearAuthTokens,
   getToken,
 } from '../services/api';
-import { signInWithGooglePopup, sendFirebaseEmailVerification } from '../services/firebase';
+import {
+  signInWithGooglePopup,
+  sendFirebaseEmailVerification,
+  checkFirebaseEmailVerified,
+} from '../services/firebase';
 
 const AuthContext = createContext(null);
 
@@ -87,6 +91,11 @@ export function AuthProvider({ children }) {
     }
   };
 
+  /**
+   * Register: creates user in MongoDB and sends Firebase email verification.
+   * NOTE: Does NOT set auth tokens or log the user in immediately so the user
+   * cannot bypass the verification screen.
+   */
   const register = async ({ name, email, password, role = 'user', bio, handle }) => {
     setIsLoading(true);
     setError(null);
@@ -96,7 +105,6 @@ export function AuthProvider({ children }) {
         await sendFirebaseEmailVerification(email, password);
       } catch (fbErr) {
         console.warn('Firebase email verification warning:', fbErr);
-        // If password is too weak according to Firebase rules (< 6 chars)
         if (fbErr.code === 'auth/weak-password') {
           setIsLoading(false);
           const msg = 'Password should be at least 6 characters.';
@@ -114,12 +122,18 @@ export function AuthProvider({ children }) {
       const res = await registerUser({ name, email, password, role, bio, handle });
       setIsLoading(false);
 
-      if (res.ok && res.data?.token) {
-        setAuthTokens(res.data.token, res.data.refreshToken);
-        setToken(res.data.token);
-        setUser(res.data.user);
-        localStorage.setItem('chirp_user', JSON.stringify(res.data.user));
-        return { success: true, user: res.data.user, emailSent: true };
+      if (res.ok && res.data) {
+        // We do NOT set tokens in state/localStorage here!
+        // We return the tokens so completeVerificationAfterEmail() can activate them once verified.
+        return {
+          success: true,
+          emailSent: true,
+          pendingAuth: {
+            token: res.data.token,
+            refreshToken: res.data.refreshToken,
+            user: res.data.user,
+          },
+        };
       } else {
         const msg = res.data?.msg || 'Registration failed';
         setError(msg);
@@ -130,6 +144,20 @@ export function AuthProvider({ children }) {
       setError(err.message || 'Registration failed');
       return { success: false, message: err.message };
     }
+  };
+
+  /**
+   * Called once user clicks "I Have Verified My Email"
+   */
+  const completeVerification = (pendingAuth) => {
+    if (pendingAuth?.token && pendingAuth?.user) {
+      setAuthTokens(pendingAuth.token, pendingAuth.refreshToken);
+      setToken(pendingAuth.token);
+      setUser(pendingAuth.user);
+      localStorage.setItem('chirp_user', JSON.stringify(pendingAuth.user));
+      return true;
+    }
+    return false;
   };
 
   // Google / Firebase Authentication
@@ -166,7 +194,6 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       setIsLoading(false);
-      // Suppress standard popup closed by user notice or report error
       if (err.code === 'auth/popup-closed-by-user') {
         return { success: false, cancelled: true };
       }
@@ -204,6 +231,7 @@ export function AuthProvider({ children }) {
         setError,
         login,
         register,
+        completeVerification,
         loginWithGoogle,
         logout,
         refreshUser,

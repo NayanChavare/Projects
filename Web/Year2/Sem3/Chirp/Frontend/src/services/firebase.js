@@ -47,7 +47,7 @@ export async function sendFirebaseEmailVerification(email, password) {
     userCredential = await createUserWithEmailAndPassword(auth, email, password);
   } catch (err) {
     if (err.code === 'auth/email-already-in-use') {
-      // If already registered in Firebase from a previous attempt, try signing in to re-send
+      // If already registered in Firebase from a previous attempt, sign in to re-send
       try {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (signInErr) {
@@ -61,4 +61,38 @@ export async function sendFirebaseEmailVerification(email, password) {
   // Send Firebase Email Verification link to the user's inbox
   await sendEmailVerification(userCredential.user);
   return userCredential;
+}
+
+/**
+ * Check if the user's email has been verified in Firebase
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<boolean>}
+ */
+export async function checkFirebaseEmailVerified(email, password) {
+  let currentUser = auth.currentUser;
+
+  if (!currentUser || currentUser.email.toLowerCase() !== email.toLowerCase()) {
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      currentUser = cred.user;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // Reload user state from Firebase servers to fetch latest emailVerified boolean
+  await currentUser.reload();
+  return !!currentUser.emailVerified;
+}
+
+/**
+ * Resend verification email to current user
+ */
+export async function resendVerificationEmail() {
+  if (auth.currentUser) {
+    await sendEmailVerification(auth.currentUser);
+    return true;
+  }
+  return false;
 }

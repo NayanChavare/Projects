@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Feather, Lock, Mail, User, ShieldCheck, AtSign, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
+import {
+  Feather,
+  Lock,
+  Mail,
+  User,
+  ShieldCheck,
+  AtSign,
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
+  ArrowRight,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { checkFirebaseEmailVerified, resendVerificationEmail } from '../services/firebase';
 
 export function SignupPage() {
-  const { register, loginWithGoogle, isLoading, error, setError } = useAuth();
+  const { register, completeVerification, loginWithGoogle, isLoading, error, setError } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -13,7 +25,13 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user'); // 'user' | 'admin'
   const [bio, setBio] = useState('');
+
+  // Email verification gate state
   const [emailSentNotice, setEmailSentNotice] = useState(false);
+  const [pendingAuth, setPendingAuth] = useState(null);
+  const [checkingVerification, setCheckingVerification] = useState(false);
+  const [verificationFeedback, setVerificationFeedback] = useState('');
+  const [resending, setResending] = useState(false);
 
   const isHandleError = error && (error.toLowerCase().includes('username') || error.toLowerCase().includes('handle'));
   const isEmailError = error && error.toLowerCase().includes('email');
@@ -38,9 +56,11 @@ export function SignupPage() {
       bio: bio.trim() || 'College Chirper 🎓',
     });
 
-    if (res.success) {
-      // Show verification notice before entering feed
+    if (res.success && res.pendingAuth) {
+      // Hold pending credentials in component state until email is confirmed
+      setPendingAuth(res.pendingAuth);
       setEmailSentNotice(true);
+      setVerificationFeedback('');
     }
   };
 
@@ -51,7 +71,48 @@ export function SignupPage() {
     }
   };
 
-  // If email verification was sent, display clear success confirmation
+  /**
+   * User clicks "I Have Verified My Email"
+   * Query Firebase to confirm user clicked the link in their email
+   */
+  const handleConfirmVerification = async () => {
+    setCheckingVerification(true);
+    setVerificationFeedback('');
+
+    try {
+      const isVerified = await checkFirebaseEmailVerified(email.trim(), password);
+
+      if (isVerified) {
+        // Email is confirmed in Firebase! Activate user session and enter app
+        completeVerification(pendingAuth);
+        navigate('/');
+      } else {
+        setVerificationFeedback(
+          "We haven't received your confirmation yet. Please open the verification email in your inbox and click the link, then try again."
+        );
+      }
+    } catch (err) {
+      console.error('Verification check error:', err);
+      setVerificationFeedback('Could not check verification status. Please make sure you clicked the link in your email.');
+    } finally {
+      setCheckingVerification(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    setResending(true);
+    setVerificationFeedback('');
+    try {
+      await resendVerificationEmail();
+      setVerificationFeedback('A fresh verification link has been resent to your inbox!');
+    } catch (err) {
+      setVerificationFeedback('Could not resend email. Please wait a moment and try again.');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  // If email verification was sent, display strict verification barrier
   if (emailSentNotice) {
     return (
       <div className="auth-page-container">
@@ -61,23 +122,53 @@ export function SignupPage() {
           </div>
           <h2 className="auth-title">Verify Your Email Address</h2>
           <p className="auth-subtitle">
-            A Firebase verification email has been dispatched to:
+            A Firebase verification email has been sent to:
           </p>
           <div className="email-highlight-box">
             <Mail size={18} />
             <strong>{email}</strong>
           </div>
+
           <p className="email-sent-instructions">
-            Please check your inbox (or spam/junk folder) and click the verification link to confirm your college account.
+            Please check your inbox (or spam folder) and click the verification link. Once clicked, press the button below to activate your account.
           </p>
-          <button
-            type="button"
-            className="auth-submit-btn"
-            onClick={() => navigate('/')}
-          >
-            <span>Enter Campus Chirp</span>
-            <ArrowRight size={18} />
-          </button>
+
+          {verificationFeedback && (
+            <div className={`verification-feedback-box ${verificationFeedback.includes('fresh') ? 'success' : 'warn'}`}>
+              <AlertCircle size={16} />
+              <span>{verificationFeedback}</span>
+            </div>
+          )}
+
+          <div className="verification-actions-group">
+            <button
+              type="button"
+              className="auth-submit-btn confirm-verify-btn"
+              onClick={handleConfirmVerification}
+              disabled={checkingVerification}
+            >
+              {checkingVerification ? (
+                <>
+                  <RefreshCw size={18} className="spinning" />
+                  <span>Checking Email Status...</span>
+                </>
+              ) : (
+                <>
+                  <span>I've Verified My Email</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="resend-link-btn"
+              onClick={handleResendEmail}
+              disabled={resending}
+            >
+              {resending ? 'Sending...' : 'Resend verification email'}
+            </button>
+          </div>
         </div>
       </div>
     );
