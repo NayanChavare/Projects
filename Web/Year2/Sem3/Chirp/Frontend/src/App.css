@@ -1176,8 +1176,15 @@
   margin-bottom: 10px;
 }
 
+.profile-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .profile-edit-btn,
-.profile-follow-btn {
+.profile-follow-btn,
+.profile-logout-btn {
   font-size: 15px;
   font-weight: 700;
   padding: 9px 20px;
@@ -1186,6 +1193,17 @@
   align-items: center;
   gap: 6px;
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.profile-logout-btn {
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--accent-danger);
+  background-color: rgba(239, 68, 68, 0.08);
+}
+.profile-logout-btn:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+  border-color: var(--accent-danger);
 }
 
 .profile-edit-btn {
@@ -2101,7 +2119,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (min-width: 641px) {
   .sidebar-container {
     width: 72px;
     padding: 12px 8px;
@@ -2125,6 +2143,315 @@
   }
   .main-content-stage {
     max-width: 100%;
+  }
+}
+
+/* ================= MOBILE PHONES & HANDHELDS (<= 640px) ================= */
+@media (max-width: 640px) {
+  /* Complete Sidebar replacement with Bottom Navigation Bar */
+  .sidebar-container {
+    display: none !important;
+  }
+
+  .chirp-app-shell {
+    display: block;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  .main-content-stage {
+    width: 100%;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Fixed Frosted Bottom Nav Bar */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-color: rgba(15, 20, 25, 0.94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .light-theme .mobile-bottom-nav {
+    background-color: rgba(255, 255, 255, 0.94);
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 6px 4px;
+    gap: 3px;
+    flex: 1;
+    min-height: 48px;
+    transition: color 0.15s ease, transform 0.1s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--brand-primary);
+    font-weight: 700;
+  }
+
+  .mobile-nav-item:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-nav-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-nav-label {
+    font-size: 10px;
+    letter-spacing: -0.2px;
+  }
+
+  /* Floating Action Button for New Chirp */
+  .mobile-fab-chirp {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    right: 18px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1d9bf0 0%, #1a8cd8 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 18px rgba(29, 155, 240, 0.55);
+    border: none;
+    z-index: 999;
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .mobile-fab-chirp:active {
+    transform: scale(0.9);
+  }
+
+  /* Mobile Sticky Headers */
+  .feed-header-sticky,
+  .page-header-sticky,
+  .explore-header-sticky {
+    padding: 8px 12px 0 12px;
+  }
+
+  .feed-header-top {
+    padding-bottom: 6px;
+  }
+
+  .feed-title,
+  .page-header-title {
+    font-size: 18px;
+  }
+
+  /* Feed Switcher Tabs */
+  .feed-tabs-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .feed-tabs-row::-webkit-scrollbar {
+    display: none;
+  }
+  .feed-tab-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+    min-width: 90px;
+  }
+
+  /* Post Card Mobile Optimization */
+  .post-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .post-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .post-user-name {
+    font-size: 14px;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .post-user-handle,
+  .post-time {
+    font-size: 12px;
+  }
+
+  .post-content-body {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .post-actions-row {
+    margin-top: 6px;
+    justify-content: space-between;
+    max-width: 100%;
+  }
+
+  .action-btn {
+    font-size: 12px;
+    padding: 6px;
+    min-height: 36px;
+    min-width: 36px;
+  }
+
+  /* Responsive Bottom-Sheet Modals */
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-card,
+  .compose-modal-card {
+    width: 100%;
+    max-width: 100%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 85vh;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Mobile Inline Composer */
+  .create-post-container {
+    padding: 12px;
+  }
+
+  .composer-input {
+    font-size: 15px;
+    min-height: 65px;
+  }
+
+  .composer-actions-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Mobile Profile Page */
+  .profile-banner-bg {
+    height: 110px;
+  }
+
+  .profile-avatar-row {
+    padding: 0 12px;
+    margin-top: -38px;
+  }
+
+  .profile-avatar-large {
+    width: 76px;
+    height: 76px;
+    border-width: 3px;
+  }
+
+  .profile-action-btn-group {
+    margin-bottom: 4px;
+  }
+
+  .profile-edit-btn,
+  .profile-follow-btn,
+  .profile-logout-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .profile-details-section {
+    padding: 12px;
+  }
+
+  .profile-full-name {
+    font-size: 18px;
+  }
+
+  .profile-handle-sub {
+    font-size: 13px;
+  }
+
+  .profile-meta-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .profile-stats-row {
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  /* Mobile Explore Page */
+  .explore-search-input-box {
+    margin: 6px 0 10px 0;
+  }
+
+  .trending-chips-row {
+    padding-bottom: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .trending-chip-card {
+    min-width: 130px;
+    padding: 8px 12px;
+  }
+
+  /* Mobile Auth Screens */
+  .auth-container {
+    padding: 14px 10px;
+  }
+
+  .auth-card {
+    padding: 20px 14px;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  .google-auth-btn {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  /* Mobile Admin View */
+  .admin-metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .admin-overview-content {
+    padding: 12px;
   }
 }
 
@@ -2275,4 +2602,12 @@
 }
 .resend-link-btn:hover {
   text-decoration: underline;
+}
+
+/* Mobile Navigation & FAB (Hidden on desktop / wide screens) */
+.mobile-bottom-nav {
+  display: none;
+}
+.mobile-fab-chirp {
+  display: none;
 }

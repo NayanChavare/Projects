@@ -9,6 +9,7 @@ import {
   UserCheck,
   Feather,
   X,
+  LogOut,
 } from 'lucide-react';
 import {
   fetchUserProfile,
@@ -25,7 +26,7 @@ import { useAuth } from '../context/AuthContext';
 export function ProfilePage() {
   const { identifier } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, logout } = useAuth();
 
   const [profileUser, setProfileUser] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -38,34 +39,35 @@ export function ProfilePage() {
   // Follower/Following modal
   const [activeModalList, setActiveModalList] = useState(null); // 'followers' | 'following' | null
   const [modalUsers, setModalUsers] = useState([]);
-  const [modalLoading, setModalLoading] = useState(false);
+  const [isModalLoading, setIsModalLoading] = useState(false);
 
   const isOwnProfile =
     currentUser &&
     profileUser &&
     (currentUser._id === profileUser._id ||
-      currentUser.id === profileUser._id ||
-      currentUser.handle === profileUser.handle);
+      currentUser.handle?.toLowerCase() === profileUser.handle?.toLowerCase());
 
   const loadProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetchUserProfile(identifier);
       if (res.ok && res.data?.user) {
-        const u = res.data.user;
-        setProfileUser(u);
-        setIsFollowing(!!u.isFollowing);
-        setFollowersCount(u.followersCount || 0);
-        setFollowingCount(u.followingCount || 0);
+        setProfileUser(res.data.user);
+        setIsFollowing(!!res.data.user.isFollowing);
+        setFollowersCount(res.data.user.followersCount || 0);
+        setFollowingCount(res.data.user.followingCount || 0);
 
         // Fetch user posts
-        const postsRes = await fetchUserPosts(u._id);
+        const postsRes = await fetchUserPosts(res.data.user._id);
         if (postsRes.ok && postsRes.data?.posts) {
           setPosts(postsRes.data.posts);
         }
+      } else {
+        setProfileUser(null);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
+      setProfileUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -119,29 +121,36 @@ export function ProfilePage() {
     }
   };
 
-  const openFollowList = async (type) => {
+  const handleOpenListModal = async (type) => {
     if (!profileUser) return;
     setActiveModalList(type);
-    setModalLoading(true);
+    setIsModalLoading(true);
     try {
       const fetchFn = type === 'followers' ? fetchFollowers : fetchFollowing;
       const res = await fetchFn(profileUser._id);
-      if (res.ok) {
-        setModalUsers(res.data[type] || []);
+      if (res.ok && res.data?.users) {
+        setModalUsers(res.data.users);
       }
     } catch (err) {
-      console.error('Error fetching follow list:', err);
+      console.error(`Error fetching ${type}:`, err);
     } finally {
-      setModalLoading(false);
+      setIsModalLoading(false);
     }
   };
 
   if (isLoading) {
     return (
       <div className="profile-view">
-        <div className="feed-skeleton-loader" style={{ padding: '24px' }}>
-          <div className="skeleton-item" style={{ height: '180px' }} />
-          <div className="skeleton-item" style={{ height: '80px' }} />
+        <header className="page-header-sticky">
+          <button type="button" className="back-btn" onClick={() => navigate(-1)}>
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="page-header-title">Profile</h1>
+        </header>
+        <div className="feed-skeleton-loader">
+          <div className="skeleton-item" style={{ height: '140px' }} />
+          <div className="skeleton-item" style={{ height: '70px' }} />
+          <div className="skeleton-item" />
         </div>
       </div>
     );
@@ -194,14 +203,28 @@ export function ProfilePage() {
 
           <div className="profile-action-btn-group">
             {isOwnProfile ? (
-              <button
-                type="button"
-                className="profile-edit-btn"
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                <Edit3 size={16} />
-                <span>Edit Profile</span>
-              </button>
+              <div className="profile-action-buttons">
+                <button
+                  type="button"
+                  className="profile-edit-btn"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <Edit3 size={16} />
+                  <span>Edit Profile</span>
+                </button>
+                <button
+                  type="button"
+                  className="profile-logout-btn"
+                  onClick={() => {
+                    logout();
+                    navigate('/login');
+                  }}
+                  title="Log out of Chirp"
+                >
+                  <LogOut size={16} />
+                  <span>Log Out</span>
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
@@ -235,91 +258,93 @@ export function ProfilePage() {
             </span>
           )}
         </div>
-        <span className="profile-handle-sub">@{profileUser.handle || 'user'}</span>
+        <p className="profile-handle-sub">@{profileUser.handle || 'user'}</p>
 
-        <p className="profile-bio-text">{profileUser.bio || 'College Chirper 🎓'}</p>
+        {profileUser.bio && <p className="profile-bio-text">{profileUser.bio}</p>}
 
         <div className="profile-meta-row">
-          <div className="meta-item">
+          <span className="meta-item">
             <Calendar size={15} />
-            <span>
-              Joined{' '}
-              {profileUser.createdAt
-                ? new Date(profileUser.createdAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    year: 'numeric',
-                  })
-                : 'Recently'}
-            </span>
-          </div>
+            Joined{' '}
+            {profileUser.createdAt
+              ? new Date(profileUser.createdAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'Campus'}
+          </span>
         </div>
 
-        {/* Following & Followers counts */}
+        {/* Stats Row */}
         <div className="profile-stats-row">
           <button
             type="button"
-            className="profile-stat-btn"
-            onClick={() => openFollowList('following')}
+            className="stat-btn"
+            onClick={() => handleOpenListModal('following')}
           >
             <strong>{followingCount}</strong> <span>Following</span>
           </button>
           <button
             type="button"
-            className="profile-stat-btn"
-            onClick={() => openFollowList('followers')}
+            className="stat-btn"
+            onClick={() => handleOpenListModal('followers')}
           >
             <strong>{followersCount}</strong> <span>Followers</span>
           </button>
-          <div className="profile-stat-nonclick">
-            <strong>{posts.length}</strong> <span>Chirps</span>
-          </div>
         </div>
       </div>
 
-      {/* Chirps Tab Header */}
-      <div className="profile-timeline-tabs">
-        <button type="button" className="timeline-tab active">
+      {/* Tab Header (Tweets / Chirps) */}
+      <div className="profile-tabs-row">
+        <button type="button" className="profile-tab active">
           <span>Chirps</span>
           <span className="tab-indicator" />
         </button>
       </div>
 
-      {/* Timeline of User's Chirps */}
-      <div className="feed-posts-list">
-        {posts.length > 0 ? (
+      {/* Post Stream */}
+      <div className="profile-posts-stream">
+        {posts.length === 0 ? (
+          <div className="feed-empty-state">
+            <Feather size={32} className="empty-icon" />
+            <h3>No Chirps yet</h3>
+            <p>
+              {isOwnProfile
+                ? "You haven't posted any campus chirps yet. Share what's on your mind!"
+                : `@${profileUser.handle || profileUser.name} hasn't posted anything yet.`}
+            </p>
+          </div>
+        ) : (
           posts.map((post) => (
             <PostCard
               key={post._id}
               post={post}
-              onDeleteSuccess={(id) => setPosts((prev) => prev.filter((p) => p._id !== id))}
+              onDeleteSuccess={(postId) =>
+                setPosts((prev) => prev.filter((p) => p._id !== postId))
+              }
             />
           ))
-        ) : (
-          <div className="feed-empty-state">
-            <Feather size={36} className="empty-icon" />
-            <h3>No chirps yet</h3>
-            <p>
-              {isOwnProfile
-                ? "You haven't posted any chirps yet. Share what's on your mind!"
-                : `@${profileUser.handle || 'user'} hasn't posted anything yet.`}
-            </p>
-          </div>
         )}
       </div>
 
       {/* Edit Profile Modal */}
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onProfileUpdated={(updated) => {
-          setProfileUser((prev) => ({ ...prev, ...updated }));
-        }}
-      />
+      {isEditModalOpen && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          initialBio={profileUser.bio || ''}
+          initialName={profileUser.name || ''}
+          onClose={() => setIsEditModalOpen(false)}
+          onProfileUpdated={(updatedUser) => {
+            setProfileUser((prev) => ({ ...prev, ...updatedUser }));
+            setIsEditModalOpen(false);
+          }}
+        />
+      )}
 
-      {/* Followers / Following Modal */}
+      {/* Followers / Following List Modal */}
       {activeModalList && (
         <div className="modal-backdrop" onClick={() => setActiveModalList(null)}>
-          <div className="modal-card follow-list-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card users-list-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
                 {activeModalList === 'followers' ? 'Followers' : 'Following'}
@@ -333,14 +358,20 @@ export function ProfilePage() {
               </button>
             </div>
 
-            <div className="modal-users-list">
-              {modalLoading ? (
-                <div className="modal-loading-text">Loading campus peers...</div>
-              ) : modalUsers.length > 0 ? (
+            <div className="modal-body-list">
+              {isModalLoading ? (
+                <div className="modal-loading-box">
+                  <div className="spinner-sm" />
+                </div>
+              ) : modalUsers.length === 0 ? (
+                <div className="modal-empty-state">
+                  <p>No campus members found.</p>
+                </div>
+              ) : (
                 modalUsers.map((u) => (
                   <div
                     key={u._id}
-                    className="modal-user-row"
+                    className="modal-user-item"
                     onClick={() => {
                       setActiveModalList(null);
                       navigate(`/profile/${u.handle || u._id}`);
@@ -358,15 +389,16 @@ export function ProfilePage() {
                       <div className="modal-user-name-row">
                         <span className="modal-user-name">{u.name}</span>
                         {u.role === 'admin' && (
-                          <span className="role-pill admin-pill-small">Admin</span>
+                          <span className="role-pill admin-pill-small">
+                            <ShieldCheck size={10} /> Admin
+                          </span>
                         )}
                       </div>
                       <span className="modal-user-handle">@{u.handle || 'user'}</span>
+                      {u.bio && <span className="modal-user-bio">{u.bio}</span>}
                     </div>
                   </div>
                 ))
-              ) : (
-                <div className="modal-empty-text">No users found.</div>
               )}
             </div>
           </div>

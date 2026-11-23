@@ -6,6 +6,7 @@ import { SocketProvider } from './context/SocketContext';
 import { Sidebar } from './components/Sidebar';
 import { RightRail } from './components/RightRail';
 import { CreatePostBox } from './components/CreatePostBox';
+import { MobileNavBar } from './components/MobileNavBar';
 
 import { HomePage } from './pages/HomePage';
 import { ExplorePage } from './pages/ExplorePage';
@@ -39,13 +40,13 @@ function PublicRoute({ children }) {
   return children;
 }
 
-// Authenticated Layout Shell (3 Columns: Sidebar | Main Feed | RightRail)
+// Authenticated Layout Shell (Sidebar | Main Feed | RightRail + Mobile Bottom Bar)
 function AppLayout({ darkMode, setDarkMode }) {
   const [isComposeModalOpen, setIsComposeModalOpen] = useState(false);
 
   return (
     <div className="chirp-app-shell">
-      {/* Column 1: Left Navigation Sidebar */}
+      {/* Column 1: Left Navigation Sidebar (Desktop & Tablet) */}
       <Sidebar
         darkMode={darkMode}
         setDarkMode={setDarkMode}
@@ -64,8 +65,15 @@ function AppLayout({ darkMode, setDarkMode }) {
         </Routes>
       </main>
 
-      {/* Column 3: Right Trending Rail */}
+      {/* Column 3: Right Trending Rail (Desktop) */}
       <RightRail />
+
+      {/* Mobile Navigation Bar & Floating Action Button */}
+      <MobileNavBar
+        onOpenCreateModal={() => setIsComposeModalOpen(true)}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+      />
 
       {/* Quick Compose Modal (from + Chirp button) */}
       {isComposeModalOpen && (
