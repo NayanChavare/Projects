@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Feather, Lock, Mail, User, ShieldCheck, AtSign, AlertCircle } from 'lucide-react';
+import { Feather, Lock, Mail, User, ShieldCheck, AtSign, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export function SignupPage() {
@@ -13,6 +13,7 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user'); // 'user' | 'admin'
   const [bio, setBio] = useState('');
+  const [emailSentNotice, setEmailSentNotice] = useState(false);
 
   const isHandleError = error && (error.toLowerCase().includes('username') || error.toLowerCase().includes('handle'));
   const isEmailError = error && error.toLowerCase().includes('email');
@@ -38,7 +39,8 @@ export function SignupPage() {
     });
 
     if (res.success) {
-      navigate('/');
+      // Show verification notice before entering feed
+      setEmailSentNotice(true);
     }
   };
 
@@ -48,6 +50,38 @@ export function SignupPage() {
       navigate('/');
     }
   };
+
+  // If email verification was sent, display clear success confirmation
+  if (emailSentNotice) {
+    return (
+      <div className="auth-page-container">
+        <div className="auth-card signup-card email-sent-card">
+          <div className="email-sent-icon-wrap">
+            <CheckCircle2 size={54} className="email-sent-icon" />
+          </div>
+          <h2 className="auth-title">Verify Your Email Address</h2>
+          <p className="auth-subtitle">
+            A Firebase verification email has been dispatched to:
+          </p>
+          <div className="email-highlight-box">
+            <Mail size={18} />
+            <strong>{email}</strong>
+          </div>
+          <p className="email-sent-instructions">
+            Please check your inbox (or spam/junk folder) and click the verification link to confirm your college account.
+          </p>
+          <button
+            type="button"
+            className="auth-submit-btn"
+            onClick={() => navigate('/')}
+          >
+            <span>Enter Campus Chirp</span>
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page-container">
@@ -218,7 +252,7 @@ export function SignupPage() {
             className="auth-submit-btn"
             disabled={isLoading}
           >
-            {isLoading ? <span className="spinner-sm" /> : 'Create Chirp Account'}
+            {isLoading ? <span className="spinner-sm" /> : 'Create Chirp Account & Verify Email'}
           </button>
         </form>
 

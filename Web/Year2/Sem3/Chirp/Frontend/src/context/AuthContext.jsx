@@ -9,7 +9,7 @@ import {
   clearAuthTokens,
   getToken,
 } from '../services/api';
-import { signInWithGooglePopup } from '../services/firebase';
+import { signInWithGooglePopup, sendFirebaseEmailVerification } from '../services/firebase';
 
 const AuthContext = createContext(null);
 
@@ -91,6 +91,26 @@ export function AuthProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
+      // 1. Send Firebase email verification link to user's email
+      try {
+        await sendFirebaseEmailVerification(email, password);
+      } catch (fbErr) {
+        console.warn('Firebase email verification warning:', fbErr);
+        // If password is too weak according to Firebase rules (< 6 chars)
+        if (fbErr.code === 'auth/weak-password') {
+          setIsLoading(false);
+          const msg = 'Password should be at least 6 characters.';
+          setError(msg);
+          return { success: false, message: msg };
+        } else if (fbErr.code === 'auth/invalid-email') {
+          setIsLoading(false);
+          const msg = 'Please enter a valid email address.';
+          setError(msg);
+          return { success: false, message: msg };
+        }
+      }
+
+      // 2. Register user in Backend & MongoDB
       const res = await registerUser({ name, email, password, role, bio, handle });
       setIsLoading(false);
 
@@ -99,7 +119,7 @@ export function AuthProvider({ children }) {
         setToken(res.data.token);
         setUser(res.data.user);
         localStorage.setItem('chirp_user', JSON.stringify(res.data.user));
-        return { success: true, user: res.data.user };
+        return { success: true, user: res.data.user, emailSent: true };
       } else {
         const msg = res.data?.msg || 'Registration failed';
         setError(msg);

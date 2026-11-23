@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUkFsmY8oT-5Y9mLzcj7sX5yQUbbA_IEQ",
@@ -14,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Prompt account selection every time
+// Prompt account selection every time for Google Sign-In
 googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
@@ -26,4 +33,32 @@ googleProvider.setCustomParameters({
 export async function signInWithGooglePopup() {
   const result = await signInWithPopup(auth, googleProvider);
   return result;
+}
+
+/**
+ * Register user in Firebase Auth and send verification email
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<{ user: any }>}
+ */
+export async function sendFirebaseEmailVerification(email, password) {
+  let userCredential;
+  try {
+    userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    if (err.code === 'auth/email-already-in-use') {
+      // If already registered in Firebase from a previous attempt, try signing in to re-send
+      try {
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+      } catch (signInErr) {
+        throw err;
+      }
+    } else {
+      throw err;
+    }
+  }
+
+  // Send Firebase Email Verification link to the user's inbox
+  await sendEmailVerification(userCredential.user);
+  return userCredential;
 }
