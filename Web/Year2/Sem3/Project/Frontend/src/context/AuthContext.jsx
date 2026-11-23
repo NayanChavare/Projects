@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser, registerUser, verifyDashboard, checkBackendStatus, searchUsersByEmail } from '../services/api';
+import { loginUser, registerUser, verifyDashboard, checkBackendStatus, searchUsersByEmail, syncFirebaseAuthUser } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -128,6 +128,42 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithFirebase = async (payload) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await syncFirebaseAuthUser(payload);
+      if (result.success && result.token) {
+        setToken(result.token);
+        const resolvedName = result.user?.name || payload.name || payload.email?.split('@')[0] || payload.phone || 'PulseChat User';
+        const phoneFormatted = (payload.phone || '').replace(/[^0-9]/g, '');
+        const resolvedEmail = result.user?.email || payload.email || `${phoneFormatted}@pulsechat.phone`;
+
+        const userData = {
+          name: resolvedName,
+          email: resolvedEmail,
+          phone: result.user?.phone || payload.phone || '',
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(resolvedName)}`,
+          about: 'Available on PulseChat',
+        };
+
+        setUser(userData);
+        localStorage.setItem('pulsechat_token', result.token);
+        localStorage.setItem('pulsechat_user', JSON.stringify(userData));
+        setIsLoading(false);
+        return { success: true };
+      } else {
+        setIsLoading(false);
+        setError(result.message);
+        return { success: false, message: result.message };
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setError(err.message || 'Firebase login failed');
+      return { success: false, message: err.message };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -147,6 +183,7 @@ export function AuthProvider({ children }) {
         setError,
         login,
         register,
+        loginWithFirebase,
         logout,
       }}
     >

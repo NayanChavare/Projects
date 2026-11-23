@@ -94,6 +94,43 @@ export async function loginUser({ email, password }) {
  * Search users by email in MongoDB Atlas via Backend
  * @param {string} email
  */
+/**
+ * Sync Firebase authenticated user with MongoDB Atlas backend
+ * @param {Object} payload - { name, email, phone, uid, authProvider }
+ */
+export async function syncFirebaseAuthUser(payload) {
+  try {
+    const response = await fetch(`${BASE_URL}/user/firebase-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (response.ok && data.success && data.token) {
+      return {
+        success: true,
+        token: data.token,
+        user: data.user,
+        message: data.msg || 'Authenticated Successfully',
+      };
+    }
+
+    return {
+      success: false,
+      message: data.message || data.msg || 'Authentication sync failed',
+    };
+  } catch (error) {
+    console.error('Firebase Sync API Error:', error);
+    return {
+      success: false,
+      message: error.message || 'Unable to connect to backend server.',
+    };
+  }
+}
+
 export async function searchUsersByEmail(email) {
   try {
     if (!email || !email.trim()) return { success: true, users: [] };
