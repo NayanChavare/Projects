@@ -51,7 +51,7 @@ export async function apiRequest(endpoint, options = {}) {
     let response = await fetch(url, { ...options, headers });
 
     // Handle token expiration: attempt automatic refresh once
-    if (response.status === 401 && !endpoint.includes('/refresh') && !endpoint.includes('/login')) {
+    if (response.status === 401 && !endpoint.includes('/refresh') && !endpoint.includes('/login') && !endpoint.includes('/google')) {
       const refreshToken = getRefreshToken();
       if (refreshToken) {
         try {
@@ -115,6 +115,14 @@ export async function loginUser({ email, password }) {
   const res = await apiRequest('/user/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+  });
+  return res;
+}
+
+export async function googleAuthUser({ email, name, avatar, uid }) {
+  const res = await apiRequest('/user/google', {
+    method: 'POST',
+    body: JSON.stringify({ email, name, avatar, uid }),
   });
   return res;
 }

@@ -2,12 +2,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   loginUser,
   registerUser,
+  googleAuthUser,
   fetchCurrentUser,
   checkBackendStatus,
   setAuthTokens,
   clearAuthTokens,
   getToken,
 } from '../services/api';
+import { signInWithGooglePopup } from '../services/firebase';
 
 const AuthContext = createContext(null);
 
@@ -110,6 +112,50 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Google / Firebase Authentication
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const credential = await signInWithGooglePopup();
+      const googleUser = credential.user;
+
+      if (!googleUser || !googleUser.email) {
+        throw new Error('Could not retrieve email from Google');
+      }
+
+      const res = await googleAuthUser({
+        email: googleUser.email,
+        name: googleUser.displayName || googleUser.email.split('@')[0],
+        avatar: googleUser.photoURL || '',
+        uid: googleUser.uid,
+      });
+
+      setIsLoading(false);
+
+      if (res.ok && res.data?.token) {
+        setAuthTokens(res.data.token, res.data.refreshToken);
+        setToken(res.data.token);
+        setUser(res.data.user);
+        localStorage.setItem('chirp_user', JSON.stringify(res.data.user));
+        return { success: true, user: res.data.user };
+      } else {
+        const msg = res.data?.msg || 'Google Authentication failed';
+        setError(msg);
+        return { success: false, message: msg };
+      }
+    } catch (err) {
+      setIsLoading(false);
+      // Suppress standard popup closed by user notice or report error
+      if (err.code === 'auth/popup-closed-by-user') {
+        return { success: false, cancelled: true };
+      }
+      const msg = err.message || 'Google Sign-In failed';
+      setError(msg);
+      return { success: false, message: msg };
+    }
+  };
+
   const logout = () => {
     clearAuthTokens();
     setUser(null);
@@ -138,6 +184,7 @@ export function AuthProvider({ children }) {
         setError,
         login,
         register,
+        loginWithGoogle,
         logout,
         refreshUser,
         updateUserInState,

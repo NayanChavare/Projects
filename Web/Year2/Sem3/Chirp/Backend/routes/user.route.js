@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { userModel } = require("../model/user.model");
 const { followModel } = require("../model/follow.model");
 const { postModel } = require("../model/post.model");
@@ -144,7 +145,75 @@ userRouter.post("/login", async (req, res) => {
   }
 });
 
-// 3. REFRESH TOKEN
+// 3. GOOGLE / FIREBASE AUTHENTICATION (Sign in or Sign up with Google/Gmail)
+userRouter.post("/google", async (req, res) => {
+  try {
+    const { email, name, avatar, uid } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Google email is required" });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    let user = await userModel.findOne({ email: cleanEmail });
+
+    if (!user) {
+      // First-time Google user: automatically generate a unique campus handle
+      const baseHandle = cleanEmail.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "").toLowerCase() || "chirper";
+      let candidateHandle = baseHandle;
+      let counter = 1;
+
+      while (await userModel.findOne({ handle: candidateHandle })) {
+        candidateHandle = `${baseHandle}${counter}`;
+        counter++;
+      }
+
+      // Generate secure random hashed password for account integrity
+      const randomPassword = crypto.randomBytes(24).toString("hex");
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      user = new userModel({
+        name: name ? name.trim() : cleanEmail.split("@")[0],
+        email: cleanEmail,
+        password: hashedPassword,
+        role: "user",
+        bio: "College Chirper 🎓",
+        handle: candidateHandle,
+        avatar: avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || cleanEmail)}`,
+      });
+    } else {
+      // Existing user logging in with Google: update avatar if provided
+      if (avatar && !user.avatar) {
+        user.avatar = avatar;
+      }
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.status(200).json({
+      msg: "Google Authentication successful",
+      token: accessToken,
+      accessToken,
+      refreshToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        handle: user.handle,
+        role: user.role,
+        bio: user.bio,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(500).json({ msg: "Google authentication failed", error: error.message });
+  }
+});
+
+// 4. REFRESH TOKEN
 userRouter.post("/refresh", async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -176,7 +245,7 @@ userRouter.post("/refresh", async (req, res) => {
   }
 });
 
-// 4. CURRENT USER INFO (/me)
+// 5. CURRENT USER INFO (/me)
 userRouter.get("/me", auth, async (req, res) => {
   try {
     const user = await userModel.findById(req.user.id).select("-password -refreshToken");
@@ -203,7 +272,7 @@ userRouter.get("/me", auth, async (req, res) => {
   }
 });
 
-// 5. USER PROFILE (/profile/:idOrHandle)
+// 6. USER PROFILE (/profile/:idOrHandle)
 userRouter.get("/profile/:identifier", async (req, res) => {
   try {
     const { identifier } = req.params;
@@ -256,7 +325,7 @@ userRouter.get("/profile/:identifier", async (req, res) => {
   }
 });
 
-// 6. UPDATE PROFILE
+// 7. UPDATE PROFILE
 userRouter.put("/profile", auth, async (req, res) => {
   try {
     const { name, bio, avatar, handle } = req.body;
@@ -283,7 +352,7 @@ userRouter.put("/profile", auth, async (req, res) => {
   }
 });
 
-// 7. SEARCH USERS
+// 8. SEARCH USERS
 userRouter.get("/search", async (req, res) => {
   const { q, email } = req.query;
   const searchStr = q || email;
@@ -309,7 +378,7 @@ userRouter.get("/search", async (req, res) => {
   }
 });
 
-// 8. SUGGESTED USERS TO FOLLOW
+// 9. SUGGESTED USERS TO FOLLOW
 userRouter.get("/suggested", auth, async (req, res) => {
   try {
     const currentUserId = req.user.id;
